@@ -2,6 +2,7 @@
 <html lang="pt-BR"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="/_auth.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <title>Banco Live — Cadastros via Form</title>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
@@ -75,6 +76,16 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
 .tag-chip-remove:hover{color:var(--danger)}
 .banner{position:fixed;top:var(--sp-3);left:50%;transform:translateX(-50%);background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-lg);padding:var(--sp-3) var(--sp-4);box-shadow:var(--shadow-md);font-size:var(--text-sm);color:var(--brand-700);z-index:80;display:none;align-items:center;gap:var(--sp-2)}
 .banner.show{display:flex}
+.select-bar{position:fixed;bottom:var(--sp-6);left:50%;transform:translateX(-50%);background:var(--brand-700);color:white;padding:var(--sp-3) var(--sp-6);border-radius:var(--radius-full);box-shadow:var(--shadow-lg);display:none;align-items:center;gap:var(--sp-3);z-index:60}
+.select-bar.show{display:flex}
+.select-bar button{padding:6px 16px;border-radius:var(--radius-md);border:none;background:white;color:var(--brand-700);font-weight:600;cursor:pointer;font-family:var(--font-ui);font-size:var(--text-sm)}
+.select-bar button.btn-cancel{background:transparent;color:white;border:1px solid rgba(255,255,255,.3)}
+.card.selected{outline:3px solid var(--accent-500);outline-offset:-3px}
+.card.select-mode{cursor:pointer}
+.card.select-mode .card-share{display:none}
+.card-checkbox{position:absolute;top:var(--sp-2);right:var(--sp-2);width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--brand-700);font-weight:700;display:none}
+.card.select-mode .card-checkbox{display:flex}
+.card.selected .card-checkbox{background:var(--accent-500);color:white}
 </style>
 </head><body>
 <div class="container">
@@ -100,8 +111,14 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
     <input type="date" class="input" id="dateTo" style="display:none;max-width:140px">
     <select class="select" id="ordem"><option value="recente">Mais recentes</option><option value="antigo">Mais antigos</option></select>
     <button class="btn" id="reload">↻ Recarregar</button>
+    <button class="btn" id="btnSelectMode" onclick="toggleSelectMode()">📊 Selecionar pra apresentação</button>
   </div>
   <div id="pendingBanner" class="banner"></div>
+  <div id="selectBar" class="select-bar">
+    <span><strong id="selectCount">0</strong> selecionada(s)</span>
+    <button onclick="generatePresentation()">📥 Gerar PDF</button>
+    <button class="btn-cancel" onclick="toggleSelectMode()">Cancelar</button>
+  </div>
   <div id="results"><div class="loading">Carregando do banco...</div></div>
   <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal">
@@ -216,7 +233,9 @@ function render(){
     const isVideo = r.tipo_artefato==='post_fixado' || r.tipo_artefato==='publicacao_avulsa';
     const novo = isNew(r.created_at);
     const tags = (r.tags || []).slice(0, 3);
-    return `<div class="card" data-card-id="${r.id}" onclick="openModal(${r.id})">
+    const selectedCls = SELECTED.has(r.id) ? ' selected' : '';
+    const modeCls = SELECT_MODE ? ' select-mode' : '';
+    return `<div class="card${modeCls}${selectedCls}" data-card-id="${r.id}" onclick="onCardClick(${r.id})">
       <div class="card-thumb ${thumb?'':'card-thumb-empty'}" style="${thumb?`background-image:url('${thumb}')`:''}">
         <div class="badge-overlay">
           <span class="badge ${TIPO_BADGE[r.tipo_estrategico]||'badge-neutral'}">${escapeHtml(r.tipo_estrategico||'—')}</span>
@@ -227,6 +246,7 @@ function render(){
         </div>
         ${thumb&&isVideo?'<div class="play">▶</div>':''}
         ${!thumb?'sem prévia':''}
+        <div class="card-checkbox">${SELECTED.has(r.id) ? '✓' : ''}</div>
         <button class="card-share" onclick="event.stopPropagation();shareCard(${r.id})" title="Copiar link da referência">🔗</button>
       </div>
       <div class="card-body">
@@ -379,6 +399,155 @@ function copyTranscription(id) {
 function shareCard(id) {
   const url = `${window.location.origin}/live#card=${id}`;
   navigator.clipboard.writeText(url).then(() => showToast('Link copiado ✓'));
+}
+
+// E3-S2 — Modo seleção + apresentação PDF
+let SELECT_MODE = false;
+let SELECTED = new Set();
+
+function toggleSelectMode() {
+  SELECT_MODE = !SELECT_MODE;
+  if (!SELECT_MODE) SELECTED.clear();
+  document.getElementById('selectBar').classList.toggle('show', SELECT_MODE);
+  document.getElementById('btnSelectMode').textContent = SELECT_MODE ? '✕ Sair da seleção' : '📊 Selecionar pra apresentação';
+  updateSelectCount();
+  render();
+}
+
+function onCardClick(id) {
+  if (!SELECT_MODE) { openModal(id); return; }
+  if (SELECTED.has(id)) SELECTED.delete(id); else SELECTED.add(id);
+  updateSelectCount();
+  render();
+}
+
+function updateSelectCount() {
+  document.getElementById('selectCount').textContent = SELECTED.size;
+}
+
+async function generatePresentation() {
+  if (!SELECTED.size) { showToast('Selecione pelo menos 1 referência'); return; }
+  const refs = [...SELECTED].map(id => DATA.find(r => r.id === id)).filter(Boolean);
+  const titulo = prompt('Título da apresentação:', `Referências — ${new Date().toLocaleDateString('pt-BR')}`) || 'Apresentação';
+
+  showToast(`Gerando PDF (${refs.length} slides)…`);
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', format: 'a4', unit: 'mm' });
+    const W = 297, H = 210;
+
+    // Capa
+    pdf.setFillColor(85, 77, 51);
+    pdf.rect(0, 0, W, H, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(32);
+    pdf.text(titulo, W/2, H/2 - 10, { align: 'center', maxWidth: W - 40 });
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(14);
+    pdf.text(`${refs.length} referência${refs.length>1?'s':''} · ${new Date().toLocaleDateString('pt-BR')}`, W/2, H/2 + 8, { align: 'center' });
+    pdf.setFontSize(10);
+    pdf.setTextColor(200, 184, 147);
+    pdf.text('Banco Case', W/2, H - 20, { align: 'center' });
+
+    for (let i = 0; i < refs.length; i++) {
+      const r = refs[i];
+      pdf.addPage();
+
+      // BG cream
+      pdf.setFillColor(250, 249, 247);
+      pdf.rect(0, 0, W, H, 'F');
+
+      // Header bar
+      pdf.setFillColor(85, 77, 51);
+      pdf.rect(0, 0, W, 18, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.text(`@${r.perfil || '—'}`, 14, 12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.text(`${(r.trilha === 'clinic' ? 'Clínica' : 'Mentoria')} · ${r.etapa_funil || '—'} · ${r.tipo_estrategico || '—'}`, W - 14, 12, { align: 'right' });
+
+      // Thumb
+      if (r.thumb_url) {
+        try {
+          const imgData = await loadImageAsDataURL(r.thumb_url);
+          if (imgData) pdf.addImage(imgData, 'JPEG', 14, 26, 90, 90);
+        } catch (e) {}
+      } else {
+        pdf.setFillColor(229, 227, 220);
+        pdf.rect(14, 26, 90, 90, 'F');
+        pdf.setTextColor(128, 122, 103);
+        pdf.setFontSize(10);
+        pdf.text('sem prévia', 59, 76, { align: 'center' });
+      }
+
+      // Resumo
+      pdf.setTextColor(53, 48, 29);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      const resumoLines = pdf.splitTextToSize(r.resumo || r.caption || '—', W - 130);
+      pdf.text(resumoLines.slice(0, 3), 114, 38);
+
+      // Caption (200 chars)
+      pdf.setTextColor(90, 86, 76);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      const captionShort = (r.caption || '').slice(0, 240);
+      const captionLines = pdf.splitTextToSize(captionShort + (r.caption?.length > 240 ? '…' : ''), W - 130);
+      pdf.text(captionLines.slice(0, 5), 114, 60);
+
+      // Transcrição preview
+      if (r.transcricao) {
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(9);
+        pdf.setTextColor(128, 122, 103);
+        pdf.text('TRECHO DA TRANSCRIÇÃO', 114, 100);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(70, 65, 55);
+        const trans = (r.transcricao || '').slice(0, 360);
+        const transLines = pdf.splitTextToSize(trans + (r.transcricao.length > 360 ? '…' : ''), W - 130);
+        pdf.text(transLines.slice(0, 8), 114, 108);
+      }
+
+      // Footer
+      pdf.setDrawColor(229, 227, 220);
+      pdf.line(14, H - 16, W - 14, H - 16);
+      pdf.setFontSize(8);
+      pdf.setTextColor(128, 122, 103);
+      pdf.text(`${i+1} / ${refs.length}`, 14, H - 8);
+      pdf.text(r.url || '', W - 14, H - 8, { align: 'right', maxWidth: 200 });
+    }
+
+    const filename = `${titulo.replace(/[^a-z0-9]/gi,'-').toLowerCase()}-${Date.now()}.pdf`;
+    pdf.save(filename);
+    showToast('PDF baixado ✓');
+    toggleSelectMode();
+  } catch (e) {
+    console.error(e);
+    showToast('Erro ao gerar PDF: ' + e.message);
+  }
+}
+
+async function loadImageAsDataURL(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 400;
+        canvas.height = img.naturalHeight || 400;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch (e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
 }
 
 function renderTagChips(r) {

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/_auth.js"></script>
+<title>Dashboard — case-refs</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
+:root{--brand-700:#554d33;--brand-900:#35301d;--accent-500:#d4703a;--cream-50:#faf9f7;--cream-100:#f5f4f0;--cream-700:#807a67;--neutral-100:#f0eee7;--neutral-200:#e5e3dc;--neutral-800:#2e2b25;--success:#4a8c5c;--warning:#c4942a;--danger:#c0392b;--font-display:"Optima","Times New Roman",serif;--font-ui:"Open Sauce Sans",system-ui,sans-serif;--shadow-sm:0 1px 3px rgba(85,77,51,.1);--shadow-lg:0 12px 24px rgba(85,77,51,.12);--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:var(--neutral-800)}
+.container{max-width:1320px;margin:0 auto;padding:32px 24px}
+.header-title{font-family:var(--font-display);font-size:2.6rem;font-weight:700;color:var(--brand-700);margin:0;letter-spacing:-.02em}
+.header-subtitle{margin:8px 0 32px;color:var(--cream-700);font-size:.95rem}
+.cards-grid{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));margin-bottom:32px}
+.card{background:white;border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow-sm)}
+.card h3{font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:var(--brand-700);margin:0 0 16px}
+.metric{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--neutral-100);font-size:.9rem}
+.metric:last-child{border-bottom:none}
+.metric-label{color:var(--cream-700)}
+.metric-value{font-weight:700;color:var(--brand-900)}
+.heatmap{width:100%;border-collapse:collapse;font-size:.8rem}
+.heatmap th,.heatmap td{padding:6px 10px;text-align:center;border:1px solid var(--neutral-200)}
+.heatmap th{background:var(--cream-100);font-weight:600;color:var(--brand-700);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.heatmap td.label{text-align:left;background:var(--cream-50);font-weight:600;color:var(--brand-700);font-size:.75rem}
+.heatmap td.gap{background:#fbe3e0;color:var(--danger);font-weight:700}
+.heatmap td.fraco{background:#fff3e0;color:var(--warning);font-weight:600}
+.heatmap td.ok{background:#e8f5e9;color:var(--success)}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:.85rem}
+.bar-row .label{flex:1;color:var(--brand-700)}
+.bar-row .bar{flex:2;background:var(--cream-100);border-radius:var(--radius-md);height:8px;overflow:hidden}
+.bar-row .bar-fill{height:100%;background:var(--accent-500);border-radius:var(--radius-md)}
+.bar-row .count{font-weight:700;color:var(--brand-900);min-width:32px;text-align:right}
+.alert-banner{background:#fbe3e0;border:1px solid var(--danger);color:var(--danger);padding:16px 20px;border-radius:var(--radius-lg);margin-bottom:24px;display:none}
+.alert-banner.show{display:block}
+.alert-banner h4{margin:0 0 8px;font-size:1rem}
+.alert-banner ul{margin:0;padding-left:20px;font-size:.85rem}
+.nav{display:flex;gap:16px;margin-bottom:24px}
+.nav a{padding:8px 16px;border-radius:var(--radius-md);background:white;color:var(--brand-700);text-decoration:none;font-size:.9rem;font-weight:600;border:1px solid var(--neutral-200)}
+.nav a:hover{background:var(--cream-100)}
+.nav a.active{background:var(--brand-700);color:white;border-color:var(--brand-700)}
+.loading{padding:48px;text-align:center;color:var(--cream-700)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:60px;margin-top:12px}
+.spark .bar{flex:1;background:var(--accent-500);border-radius:2px 2px 0 0;min-height:2px;position:relative}
+.spark .bar:hover{background:var(--brand-700)}
+.spark .bar-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--cream-700);white-space:nowrap}
+</style>
+</head><body>
+<div class="container">
+  <h1 class="header-title">Dashboard</h1>
+  <p class="header-subtitle">Cobertura, volume e gaps das trilhas Mentoria + Clínica</p>
+  <div class="nav">
+    <a href="/">Início</a>
+    <a href="/trilhas">Trilhas</a>
+    <a href="/posts">Posts</a>
+    <a href="/live">Live</a>
+    <a href="/dashboard" class="active">Dashboard</a>
+  </div>
+
+  <div id="alertBanner" class="alert-banner"></div>
+  <div id="content"><div class="loading">Carregando…</div></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://knusqfbvhsqworzyhvip.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo";
+
+const ETAPAS = ['DESCOBERTA','CONFIANCA','ACAO'];
+const TIPOS = ['Apresentação','Prova Social','Oferta/CTA','Quem Sou','Resultados','Metodologia/Produto','FAQ','Dicas Grátis','Bastidores'];
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtNum(n){return (n||0).toLocaleString('pt-BR');}
+
+async function loadData() {
+  const url = `${SUPABASE_URL}/rest/v1/v_referencias_publicas?select=*&limit=2000`;
+  const r = await fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON }});
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return await r.json();
+}
+
+function calcCoverage(data) {
+  const grid = {};
+  data.forEach(r => {
+    if (!r.trilha || !r.etapa_funil || !r.tipo_estrategico) return;
+    const key = `${r.trilha}|${r.etapa_funil}|${r.tipo_estrategico}`;
+    grid[key] = (grid[key] || 0) + 1;
+  });
+  return grid;
+}
+
+function renderHeatmap(grid, trilha) {
+  let html = '<table class="heatmap"><tr><th></th>';
+  ETAPAS.forEach(e => html += `<th>${e}</th>`);
+  html += '</tr>';
+  TIPOS.forEach(tipo => {
+    html += `<tr><td class="label">${tipo}</td>`;
+    ETAPAS.forEach(etapa => {
+      const n = grid[`${trilha}|${etapa}|${tipo}`] || 0;
+      const cls = n <= 2 ? 'gap' : n <= 5 ? 'fraco' : 'ok';
+      html += `<td class="${cls}" title="${n} refs">${n}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table>';
+  return html;
+}
+
+function renderTopList(items, formatter) {
+  return items.slice(0, 10).map(([k, v]) => `
+    <div class="bar-row">
+      <span class="label">${formatter(k)}</span>
+      <div class="bar"><div class="bar-fill" style="width:${(v / items[0][1] * 100)}%"></div></div>
+      <span class="count">${fmtNum(v)}</span>
+    </div>
+  `).join('');
+}
+
+function renderSparkline(byWeek) {
+  const max = Math.max(...byWeek.map(([,v]) => v), 1);
+  return `<div class="spark">${byWeek.map(([wk, v]) =>
+    `<div class="bar" style="height:${(v/max)*100}%" title="${wk}: ${v} refs"></div>`
+  ).join('')}</div><div style="font-size:.65rem;color:var(--cream-700);text-align:center;margin-top:24px">Últimas 12 semanas</div>`;
+}
+
+function buildBreakdown(data, field) {
+  const acc = {};
+  data.forEach(r => { const k = r[field] || '—'; acc[k] = (acc[k] || 0) + 1; });
+  return Object.entries(acc).sort((a,b) => b[1] - a[1]);
+}
+
+function buildWeekly(data) {
+  const weeks = {};
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 7 * 86400000);
+    const k = `S${52 - i}`;
+    weeks[k] = 0;
+  }
+  data.forEach(r => {
+    if (!r.created_at) return;
+    const t = new Date(r.created_at).getTime();
+    const weeksAgo = Math.floor((Date.now() - t) / (7 * 86400000));
+    if (weeksAgo < 12 && weeksAgo >= 0) {
+      const k = `S${52 - weeksAgo}`;
+      weeks[k] = (weeks[k] || 0) + 1;
+    }
+  });
+  return Object.entries(weeks);
+}
+
+function findGaps(grid) {
+  const gaps = [];
+  ['clinic','scale'].forEach(t => {
+    ETAPAS.forEach(e => {
+      TIPOS.forEach(tipo => {
+        const n = grid[`${t}|${e}|${tipo}`] || 0;
+        if (n <= 2) gaps.push({ trilha: t, etapa: e, tipo, count: n });
+      });
+    });
+  });
+  return gaps;
+}
+
+async function init() {
+  let data;
+  try { data = await loadData(); }
+  catch (e) {
+    document.getElementById('content').innerHTML = `<div class="alert-banner show"><h4>Erro</h4>${escapeHtml(e.message)}</div>`;
+    return;
+  }
+
+  // Saturation alert
+  const grid = calcCoverage(data);
+  const gaps = findGaps(grid);
+  if (gaps.length) {
+    const banner = document.getElementById('alertBanner');
+    banner.classList.add('show');
+    banner.innerHTML = `
+      <h4>🚨 ${gaps.length} categoria(s) com cobertura crítica (≤2 refs)</h4>
+      <ul>${gaps.slice(0, 8).map(g => `<li>${g.trilha} / ${g.etapa} / ${g.tipo}: <strong>${g.count} ref(s)</strong></li>`).join('')}</ul>
+      ${gaps.length > 8 ? `<p style="margin-top:8px;font-size:.85rem">+ ${gaps.length - 8} outras…</p>` : ''}
+    `;
+  }
+
+  const byTrilha = buildBreakdown(data, 'trilha');
+  const byEtapa = buildBreakdown(data, 'etapa_funil');
+  const byTipo = buildBreakdown(data, 'tipo_estrategico');
+  const byPerfil = buildBreakdown(data, 'perfil');
+  const byArtefato = buildBreakdown(data, 'tipo_artefato');
+  const weekly = buildWeekly(data);
+
+  const html = `
+    <div class="cards-grid">
+      <div class="card">
+        <h3>Volume total</h3>
+        <div class="metric"><span class="metric-label">Total de referências</span><span class="metric-value">${fmtNum(data.length)}</span></div>
+        <div class="metric"><span class="metric-label">Perfis únicos</span><span class="metric-value">${fmtNum(byPerfil.length)}</span></div>
+        ${byArtefato.map(([k,v]) => `<div class="metric"><span class="metric-label">${k}</span><span class="metric-value">${fmtNum(v)}</span></div>`).join('')}
+      </div>
+
+      <div class="card">
+        <h3>Crescimento (semanas)</h3>
+        ${renderSparkline(weekly)}
+        <div class="metric" style="margin-top:24px"><span class="metric-label">Últimos 7 dias</span><span class="metric-value">${data.filter(r => r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 7*86400000).length}</span></div>
+        <div class="metric"><span class="metric-label">Últimos 30 dias</span><span class="metric-value">${data.filter(r => r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 30*86400000).length}</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Por trilha</h3>
+        ${renderTopList(byTrilha, k => k === 'clinic' ? 'Clínica' : k === 'scale' ? 'Mentoria' : k)}
+      </div>
+
+      <div class="card">
+        <h3>Por etapa do funil</h3>
+        ${renderTopList(byEtapa, k => k === 'DESCOBERTA' ? 'Descoberta' : k === 'CONFIANCA' ? 'Confiança' : k === 'ACAO' ? 'Ação' : k)}
+      </div>
+
+      <div class="card">
+        <h3>Por tipo estratégico</h3>
+        ${renderTopList(byTipo, k => k)}
+      </div>
+
+      <div class="card">
+        <h3>Top 10 perfis</h3>
+        ${renderTopList(byPerfil, k => `@${k}`)}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h3>Cobertura — Trilha Clínica</h3>
+      <p style="font-size:.85rem;color:var(--cream-700);margin:0 0 16px">Vermelho = ≤2 refs (crítico) · Amarelo = 3-5 (atenção) · Verde = 6+ (saudável)</p>
+      ${renderHeatmap(grid, 'clinic')}
+    </div>
+    <div class="card">
+      <h3>Cobertura — Trilha Mentoria</h3>
+      <p style="font-size:.85rem;color:var(--cream-700);margin:0 0 16px">Vermelho = ≤2 refs (crítico) · Amarelo = 3-5 (atenção) · Verde = 6+ (saudável)</p>
+      ${renderHeatmap(grid, 'scale')}
+    </div>
+  `;
+
+  document.getElementById('content').innerHTML = html;
+}
+
+init();
+</script>
+</body></html>

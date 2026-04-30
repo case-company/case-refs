@@ -3,6 +3,26 @@
 // Pra trocar a senha: gera hash com `await sha256("nova-senha")` no console e atualiza PASSWORD_HASH abaixo.
 // Repo é público de propósito; dados sensíveis estão protegidos no Supabase via RLS.
 
+// PWA: registra Service Worker + manifest link
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+(function injectManifest() {
+  if (document.querySelector('link[rel="manifest"]')) return;
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = '/manifest.json';
+  document.head.appendChild(link);
+  const meta = document.createElement('meta');
+  meta.name = 'theme-color';
+  meta.content = '#554d33';
+  document.head.appendChild(meta);
+  const apple = document.createElement('link');
+  apple.rel = 'apple-touch-icon';
+  apple.href = '/icons/icon-192.png';
+  document.head.appendChild(apple);
+})();
+
 (async function() {
   const COOKIE = 'case-refs-auth';
   const COOKIE_DAYS = 30;

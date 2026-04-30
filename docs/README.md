@@ -41,9 +41,9 @@ docs/
 |---|---|---|---|---|
 | Imediato | EPIC-01 Quick Wins | 4 (4 front done) | ~1 dia | 🟡 Backend pendente |
 | Curto prazo | EPIC-02 Curadoria Power Tools | 6 (6 front done, 5 ✅ + 1 🟡) | ~2-3 dias | 🟡 Backend pendente (1 case webhook) |
-| Médio prazo | EPIC-03 Intelligence & Integration | 6 | ~8-12 dias | 🔵 Ready |
-| Longo prazo | EPIC-04 AI & Mobile | 3 | ~3-4 semanas | 🟣 Discovery |
-| **Total** | **4 epics** | **19 stories (4 front done)** | **~6 semanas** | |
+| Médio prazo | EPIC-03 Intelligence & Integration | 6 (3 ✅ + 3 🔵) | ~8-12 dias | 🟡 Parcial |
+| Longo prazo | EPIC-04 AI & Mobile | 3 (1 ✅ + 2 🔵) | ~3-4 semanas | 🟡 Parcial |
+| **Total** | **4 epics** | **19 stories (13 implementadas)** | **~6 semanas** | |
 
 ## Stories concluídas
 
@@ -57,6 +57,18 @@ docs/
 - 🟡 **E2-S4** — Tag livre por card: frontend done, aguarda webhook + migration (2026-04-30)
 - ✅ **E2-S5** — Bulk add (2026-04-30)
 - ✅ **E2-S6** — Notificação processamento via heurística client (2026-04-30)
+- ✅ **E3-S1** — Dashboard de uso em /dashboard (2026-04-30)
+- ✅ **E3-S2** — Modo apresentação com PDF via jsPDF (2026-04-30)
+- ✅ **E3-S4** — Detector saturação (banner client-side; cron/email = Discovery)
+- ✅ **E4-S1** — PWA mobile instalável (manifest + Service Worker + ícones) (2026-04-30)
+
+## Stories em Discovery (requerem decisão/setup externo)
+
+- 🔵 **E3-S3** — Vincular ref → mentorada (precisa schema canônico de mentoradas)
+- 🔵 **E3-S5** — Auto-rescan (100% backend; cron n8n + Apify)
+- 🔵 **E3-S6** — API pública (Cloudflare Worker ou Vercel Pro)
+- 🔵 **E4-S2** — Chat-to-search (pgvector + OpenAI/Claude API)
+- 🔵 **E4-S3** — Comparador mentoradas (depende E3-S3)
 
 ## Como contribuir
 

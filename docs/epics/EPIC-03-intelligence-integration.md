@@ -14,12 +14,19 @@ Transformar banco passivo em sistema ativo de inteligência. Ele não só armaze
 
 ## Stories
 
-- [ ] [E3-S1: Dashboard de uso](../stories/E3-S1-dashboard-uso.md)
-- [ ] [E3-S2: Modo apresentação (slide/PDF)](../stories/E3-S2-modo-apresentacao.md)
-- [ ] [E3-S3: Vincular referência → mentorada](../stories/E3-S3-vinculo-mentorada.md)
-- [ ] [E3-S4: Detector de saturação](../stories/E3-S4-detector-saturacao.md)
-- [ ] [E3-S5: Auto-rescan periódico de perfis](../stories/E3-S5-auto-rescan.md)
-- [ ] [E3-S6: API pública pra outros apps Case](../stories/E3-S6-api-publica.md)
+- [x] ✅ [E3-S1: Dashboard de uso](../stories/E3-S1-dashboard-uso.md) — concluído 2026-04-30
+- [x] ✅ [E3-S2: Modo apresentação (PDF)](../stories/E3-S2-modo-apresentacao.md) — concluído 2026-04-30
+- [ ] 🔵 [E3-S3: Vincular referência → mentorada](../stories/E3-S3-vinculo-mentorada.md) — Discovery (depende de schema mentoradas)
+- [x] ✅ [E3-S4: Detector de saturação](../stories/E3-S4-detector-saturacao.md) — concluído 2026-04-30 (parte client) / 🔵 (parte cron-email)
+- [ ] 🔵 [E3-S5: Auto-rescan periódico](../stories/E3-S5-auto-rescan.md) — Discovery (100% backend)
+- [ ] 🔵 [E3-S6: API pública](../stories/E3-S6-api-publica.md) — Discovery (fora do repo estático)
+
+## Progresso
+
+**3/6 stories concluídas** (1, 2, 4-parcial). 3 marcadas como Discovery com motivos claros nos arquivos:
+- E3-S3 aguarda decisão sobre schema canônico de mentoradas
+- E3-S5 é 100% backend (cron n8n + Apify, ~1 dia)
+- E3-S6 requer Cloudflare Worker ou Vercel Pro
 
 ## Critérios de Sucesso
 

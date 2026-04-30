@@ -9,10 +9,11 @@ Banco de referências de conteúdo da Case — trilhas Mentoria + Clínica.
 
 | Rota | O que tem |
 |---|---|
-| [`/`](https://refs.casein.com.br/) | Landing com 3 cards |
+| [`/`](https://refs.casein.com.br/) | Landing com 4 cards |
 | [`/trilhas`](https://refs.casein.com.br/trilhas) | Banco organizado por etapa do funil + tipo |
 | [`/posts`](https://refs.casein.com.br/posts) | Posts fixados + destaques dos perfis |
-| [`/live`](https://refs.casein.com.br/live) | Refs cadastradas via formulário (filtros de data + auto-refresh) |
+| [`/live`](https://refs.casein.com.br/live) | Refs cadastradas via formulário (filtros + auto-refresh + modo apresentação) |
+| [`/dashboard`](https://refs.casein.com.br/dashboard) | Cobertura, gaps, crescimento, top perfis |
 
 ## Como adicionar referência
 

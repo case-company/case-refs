@@ -16,9 +16,13 @@ Capacidades transformadoras — não são "melhorar o existente", são vetores n
 
 ## Stories
 
-- [ ] [E4-S1: PWA mobile instalável](../stories/E4-S1-pwa-mobile.md)
-- [ ] [E4-S2: Chat-to-search via embedding](../stories/E4-S2-chat-search.md)
-- [ ] [E4-S3: Comparador automático entre mentoradas](../stories/E4-S3-comparador-mentoradas.md)
+- [x] ✅ [E4-S1: PWA mobile instalável](../stories/E4-S1-pwa-mobile.md) — concluído 2026-04-30
+- [ ] 🔵 [E4-S2: Chat-to-search via embedding](../stories/E4-S2-chat-search.md) — Discovery (pgvector + LLM API)
+- [ ] 🔵 [E4-S3: Comparador automático entre mentoradas](../stories/E4-S3-comparador-mentoradas.md) — Discovery (depende E3-S3)
+
+## Progresso
+
+**1/3 stories concluídas** (PWA já instalável). 2 em Discovery aguardando dependências.
 
 ## Critérios de Sucesso
 
