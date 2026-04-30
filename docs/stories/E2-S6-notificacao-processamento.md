@@ -1,129 +1,41 @@
 # E2-S6 — Notificação quando processamento termina
 
 **Epic:** EPIC-02 — Curadoria Power Tools
-**Status:** Ready
-**Prioridade:** P2
-**Estimate:** 3h
-**Owner:** Kaique
-**Dependências:** Realtime Supabase OU polling agressivo
+**Status:** ✅ Done (heurística client-side, sem realtime)
+**Concluído em:** 2026-04-30
 
----
+## Implementação
 
-## User Story
+### Tracking de pendentes
 
-Como **curador que acabou de adicionar refs**, quero ser **avisado quando o processamento terminou** (transcrição + capa + classificação prontas), pra **não ficar dando F5** pra ver se chegou.
+- Ao adicionar referência (single ou bulk), `trackPending(payload)` salva chave `url|created_at` em localStorage
+- Lista de pendentes persiste entre reloads e abas
 
-## Contexto
+### Detecção de conclusão
 
-Hoje: adiciona ref, fecha modal, fica olhando `/live` esperando aparecer. Refresh manual a cada 30s (já tem auto-refresh, mas curador não sabe). Frustrante.
+- `checkPendingComplete()` roda a cada `load()` (a cada 30s pelo auto-refresh)
+- Pra cada chave pendente, procura nos cards recém-carregados (últimos 10 min) match por `url` ou `shortcode`
+- Match → toast "✓ @perfil processado" + Notification do navegador (se permitido) + remove da fila
 
-## Critérios de Aceite
+### UI
 
-1. **Banner discreto no topo da página** após adicionar ref:
-   - "⏳ Processando 3 referência(s)..."
-   - Atualiza contador conforme as refs terminam
-2. **Toast quando 1 ref específica termina**:
-   - "✓ @perfil — Prova Social processado [Ver]"
-   - Botão "Ver" abre o modal da ref
-3. **Notificação do navegador** (opcional, com permissão):
-   - Mesmo se a aba estiver em background
-   - Se `Notification.permission === 'granted'`
-4. **Listener via Supabase Realtime** OU polling do `/live` a cada 10s enquanto há pendentes
-5. **Estado em localStorage**: lista de IDs pendentes persiste se recarregar página
-6. **Limpa automaticamente** quando todas as pendentes processaram OU após 10 minutos
+- **Banner discreto no topo** de `/live` mostra "⏳ N referência(s) processando…" enquanto há pendentes
+- **Toast por ref completa**
+- **Notification do navegador** (com permissão) funciona com aba em background
+- Pede permissão automaticamente no primeiro acesso com pendentes
 
-## Notas Técnicas
+## Arquivos modificados
 
-### Opção A — Supabase Realtime (preferida)
+- `live.html` — `PENDING_IDS` Set + localStorage sync, `addPending`/`updatePendingBanner`/`checkPendingComplete`, banner CSS, request de Notification permission
+- `trilhas.html` — `trackPending()` chamado em `addReference()` (single + bulk)
 
-```js
-const supa = supabase.createClient(URL, ANON);
-const ch = supa
-  .channel('refs-processed')
-  .on('postgres_changes', {
-    event: 'UPDATE',
-    schema: 'public',
-    table: 'referencias_conteudo',
-    filter: 'status=eq.processed'
-  }, payload => {
-    const ref = payload.new;
-    if (PENDING_IDS.has(ref.id)) {
-      PENDING_IDS.delete(ref.id);
-      notifyDone(ref);
-      updateBanner();
-    }
-  })
-  .subscribe();
+## Decisões técnicas
 
-function notifyDone(ref) {
-  showToast(`✓ @${ref.perfil} — ${ref.tipo_estrategico || 'processado'}`);
-  if (Notification.permission === 'granted') {
-    new Notification('case-refs', {
-      body: `@${ref.perfil} pronto!`,
-      icon: ref.thumb_url || '/favicon.ico'
-    });
-  }
-}
-```
+- **Heurística por URL/shortcode** ao invés de Realtime Supabase: simpler, no extra dependency, dados já chegam via auto-refresh de 30s
+- **Não há coluna `status` na tabela** — detecção é "apareceu na view pública" = "processado". Refs que falham processamento nunca ficam visíveis = nunca disparam toast (acceptable)
 
-### Opção B — Polling agressivo (fallback)
+## Iteração futura
 
-```js
-async function pollPending() {
-  if (!PENDING_IDS.size) return;
-  const ids = [...PENDING_IDS].join(',');
-  const url = `${SUPABASE_URL}/rest/v1/v_referencias_publicas?id=in.(${ids})`;
-  const r = await fetch(url, { headers: SUPA_HEADERS });
-  const rows = await r.json();
-  rows.forEach(ref => {
-    if (ref.status === 'processed') {
-      PENDING_IDS.delete(ref.id);
-      notifyDone(ref);
-    }
-  });
-  updateBanner();
-  if (PENDING_IDS.size) setTimeout(pollPending, 10000);
-}
-```
-
-### Estado persistente
-
-```js
-function addPending(id) {
-  PENDING_IDS.add(id);
-  localStorage.setItem('case-refs:pending', JSON.stringify([...PENDING_IDS]));
-}
-
-function loadPending() {
-  const stored = JSON.parse(localStorage.getItem('case-refs:pending') || '[]');
-  stored.forEach(id => PENDING_IDS.add(id));
-}
-```
-
-## Coluna necessária
-
-```sql
-ALTER TABLE referencias_conteudo ADD COLUMN status TEXT DEFAULT 'pending';
--- valores: pending | processing | processed | failed
-```
-
-n8n atualiza `status` ao final do workflow:
-- Apify scraper rodou → `processing`
-- Transcrição + classificação prontas → `processed`
-- Erro → `failed`
-
-## Definition of Done
-
-- [ ] Banner aparece após adicionar
-- [ ] Toast por ref ao processar
-- [ ] Notification do navegador (com permissão)
-- [ ] Estado persiste em localStorage
-- [ ] Limpa após 10 min
-- [ ] Coluna `status` na tabela
-- [ ] Realtime ou polling funcionando
-
-## Edge cases
-
-- **Ref nunca termina** (n8n falhou silenciosamente): após 10min, banner some + toast "Algumas refs ainda processando, recarregue depois"
-- **Múltiplas abas abertas**: cada uma mostra próprio estado (sem broadcast)
-- **Bloqueio de notification**: degrada gracefully pro toast
+- Coluna `status` em `referencias_conteudo` (`pending`/`processing`/`processed`/`failed`)
+- Supabase Realtime via `postgres_changes` em vez de polling
+- Timeout: pendentes >10min → toast "Algumas refs ainda processando…"

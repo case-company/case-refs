@@ -40,7 +40,7 @@ docs/
 | Horizonte | Epic | Stories | Estimate total | Status |
 |---|---|---|---|---|
 | Imediato | EPIC-01 Quick Wins | 4 (4 front done) | ~1 dia | 🟡 Backend pendente |
-| Curto prazo | EPIC-02 Curadoria Power Tools | 6 | ~2-3 dias | 🔵 Ready |
+| Curto prazo | EPIC-02 Curadoria Power Tools | 6 (6 front done, 5 ✅ + 1 🟡) | ~2-3 dias | 🟡 Backend pendente (1 case webhook) |
 | Médio prazo | EPIC-03 Intelligence & Integration | 6 | ~8-12 dias | 🔵 Ready |
 | Longo prazo | EPIC-04 AI & Mobile | 3 | ~3-4 semanas | 🟣 Discovery |
 | **Total** | **4 epics** | **19 stories (4 front done)** | **~6 semanas** | |
@@ -51,6 +51,12 @@ docs/
 - ✅ **E1-S2** — Proteção por senha gate client-side (2026-04-30)
 - 🟡 **E1-S3** — Edição inline de notas: frontend done, aguarda webhook n8n + migration (2026-04-30)
 - 🟡 **E1-S4** — Botão deletar com confirm: frontend done, aguarda webhook n8n + migration (2026-04-30)
+- ✅ **E2-S1** — Deep-link de card (2026-04-30)
+- ✅ **E2-S2** — Cópia de transcrição (2026-04-30)
+- ✅ **E2-S3** — Filtro por data customizada (2026-04-30)
+- 🟡 **E2-S4** — Tag livre por card: frontend done, aguarda webhook + migration (2026-04-30)
+- ✅ **E2-S5** — Bulk add (2026-04-30)
+- ✅ **E2-S6** — Notificação processamento via heurística client (2026-04-30)
 
 ## Como contribuir
 

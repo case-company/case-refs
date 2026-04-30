@@ -68,6 +68,13 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
 .btn-mini:hover{background:var(--cream-100);color:var(--brand-700)}
 .btn-danger{padding:var(--sp-2) var(--sp-4);font-size:var(--text-sm);font-weight:600;border-radius:var(--radius-md);border:1px solid #f5c2bd;background:white;color:var(--danger);cursor:pointer;font-family:var(--font-ui)}
 .btn-danger:hover{background:#ffebee}
+.card-share{position:absolute;bottom:var(--sp-2);right:var(--sp-2);width:32px;height:32px;border-radius:var(--radius-full);background:rgba(255,255,255,.92);border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-xs);opacity:0;transition:opacity .2s}
+.card:hover .card-share{opacity:1}
+.tag-chip{display:inline-block;padding:2px 8px;font-size:var(--text-2xs);background:var(--cream-100);color:var(--brand-700);border-radius:var(--radius-full);font-weight:500}
+.tag-chip-remove{cursor:pointer;margin-left:4px;color:var(--cream-700)}
+.tag-chip-remove:hover{color:var(--danger)}
+.banner{position:fixed;top:var(--sp-3);left:50%;transform:translateX(-50%);background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-lg);padding:var(--sp-3) var(--sp-4);box-shadow:var(--shadow-md);font-size:var(--text-sm);color:var(--brand-700);z-index:80;display:none;align-items:center;gap:var(--sp-2)}
+.banner.show{display:flex}
 </style>
 </head><body>
 <div class="container">
@@ -88,10 +95,13 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
     <input type="search" class="input input-search" id="q" placeholder="Buscar perfil, caption, transcrição...">
     <select class="select" id="trilha"><option value="">Todas trilhas</option><option value="clinic">Clínica</option><option value="scale">Mentoria</option></select>
     <select class="select" id="etapa"><option value="">Todas etapas</option><option value="DESCOBERTA">Descoberta</option><option value="CONFIANCA">Confiança</option><option value="ACAO">Ação</option></select>
-    <select class="select" id="periodo"><option value="">Qualquer data</option><option value="1h">Última hora</option><option value="24h">Últimas 24h</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option></select>
+    <select class="select" id="periodo"><option value="">Qualquer data</option><option value="1h">Última hora</option><option value="24h">Últimas 24h</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="custom">Personalizado…</option></select>
+    <input type="date" class="input" id="dateFrom" style="display:none;max-width:140px">
+    <input type="date" class="input" id="dateTo" style="display:none;max-width:140px">
     <select class="select" id="ordem"><option value="recente">Mais recentes</option><option value="antigo">Mais antigos</option></select>
     <button class="btn" id="reload">↻ Recarregar</button>
   </div>
+  <div id="pendingBanner" class="banner"></div>
   <div id="results"><div class="loading">Carregando do banco...</div></div>
   <div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal">
@@ -138,6 +148,14 @@ function periodoCutoff(p){
   if (p === 'hoje') { const d = new Date(); d.setHours(0,0,0,0); return d.getTime(); }
   if (p === '7d') return now - 7*86400000;
   if (p === '30d') return now - 30*86400000;
+  if (p === 'custom') {
+    const fromV = document.getElementById('dateFrom').value;
+    const toV = document.getElementById('dateTo').value;
+    if (!fromV || !toV) return null;
+    const from = new Date(fromV + 'T00:00:00').getTime();
+    const to = new Date(toV + 'T23:59:59').getTime();
+    return { from, to };
+  }
   return null;
 }
 
@@ -148,6 +166,7 @@ async function load(){
     if (!r.ok) throw new Error('HTTP ' + r.status);
     DATA = await r.json();
     render();
+    if (typeof checkPendingComplete === 'function') checkPendingComplete();
   } catch (e) {
     document.getElementById('results').innerHTML = `<div class="error">Falha ao carregar do banco: ${escapeHtml(e.message)}</div>`;
   }
@@ -161,13 +180,21 @@ function render(){
   const ordem = document.getElementById('ordem').value;
   const q = document.getElementById('q').value.trim().toLowerCase();
   const cutoff = periodoCutoff(periodo);
-  let rows = DATA.filter(r =>
-    (!tipo || r.tipo_artefato===tipo) &&
-    (!trilha || r.trilha===trilha) &&
-    (!etapa || r.etapa_funil===etapa) &&
-    (!cutoff || (r.created_at && new Date(r.created_at).getTime() >= cutoff)) &&
-    (!q || ((r.perfil||'')+' '+(r.caption||'')+' '+(r.resumo||'')+' '+(r.transcricao||'')).toLowerCase().includes(q))
-  );
+  let rows = DATA.filter(r => {
+    if (tipo && r.tipo_artefato !== tipo) return false;
+    if (trilha && r.trilha !== trilha) return false;
+    if (etapa && r.etapa_funil !== etapa) return false;
+    if (cutoff) {
+      const t = r.created_at ? new Date(r.created_at).getTime() : 0;
+      if (typeof cutoff === 'object') {
+        if (t < cutoff.from || t > cutoff.to) return false;
+      } else {
+        if (t < cutoff) return false;
+      }
+    }
+    if (q && !((r.perfil||'')+' '+(r.caption||'')+' '+(r.resumo||'')+' '+(r.transcricao||'')+' '+((r.tags||[]).join(' '))).toLowerCase().includes(q)) return false;
+    return true;
+  });
   rows.sort((a,b) => {
     const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
     const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -188,7 +215,8 @@ function render(){
     const thumb = r.thumb_url || '';
     const isVideo = r.tipo_artefato==='post_fixado' || r.tipo_artefato==='publicacao_avulsa';
     const novo = isNew(r.created_at);
-    return `<div class="card" onclick="openModal(${r.id})">
+    const tags = (r.tags || []).slice(0, 3);
+    return `<div class="card" data-card-id="${r.id}" onclick="openModal(${r.id})">
       <div class="card-thumb ${thumb?'':'card-thumb-empty'}" style="${thumb?`background-image:url('${thumb}')`:''}">
         <div class="badge-overlay">
           <span class="badge ${TIPO_BADGE[r.tipo_estrategico]||'badge-neutral'}">${escapeHtml(r.tipo_estrategico||'—')}</span>
@@ -199,6 +227,7 @@ function render(){
         </div>
         ${thumb&&isVideo?'<div class="play">▶</div>':''}
         ${!thumb?'sem prévia':''}
+        <button class="card-share" onclick="event.stopPropagation();shareCard(${r.id})" title="Copiar link da referência">🔗</button>
       </div>
       <div class="card-body">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2)">
@@ -207,6 +236,7 @@ function render(){
         </div>
         <h4 class="card-title">${escapeHtml(r.resumo||'—')}</h4>
         <div class="card-caption">${escapeHtml(r.caption||'')}</div>
+        ${tags.length?`<div style="display:flex;gap:4px;flex-wrap:wrap">${tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         <div class="card-foot">
           <span>${[fmtNum(r.likes)?'♥ '+fmtNum(r.likes):'',fmtNum(r.comments)?'💬 '+fmtNum(r.comments):'',fmtNum(r.views)?'▶ '+fmtNum(r.views):''].filter(x=>x).join(' · ')}</span>
           <span class="badge badge-cream">${ETAPA_LABEL[r.etapa_funil]||'—'}</span>
@@ -252,6 +282,12 @@ function openModal(id){
   </div>`;
   if (r.caption) body += `<div class="modal-section"><h4>Caption</h4><div style="font-size:var(--text-sm);white-space:pre-wrap">${escapeHtml(r.caption)}</div></div>`;
   if (r.transcricao) body += `<div class="modal-section"><h4>Transcrição ${r.language_code?`[${r.language_code}]`:''} <button class="btn-mini" onclick="copyTranscription(${id})">📋 Copiar</button></h4><div class="modal-transcript">${escapeHtml(r.transcricao)}</div></div>`;
+  body += `<div class="modal-section" id="tagsSection">
+    <h4 style="display:flex;justify-content:space-between;align-items:center">
+      <span>Tags</span>
+    </h4>
+    <div id="tagsView">${renderTagChips(r)}</div>
+  </div>`;
   body += `<div class="modal-section" id="notesSection">
     <h4 style="display:flex;justify-content:space-between;align-items:center">
       <span>Notas</span>
@@ -259,7 +295,8 @@ function openModal(id){
     </h4>
     <div id="notesView" style="font-size:var(--text-sm);color:var(--cream-700);white-space:pre-wrap;min-height:1.4em">${escapeHtml(r.notas||'(sem notas)')}</div>
   </div>`;
-  body += `<div class="modal-section" style="border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
+  body += `<div class="modal-section" style="display:flex;justify-content:space-between;gap:var(--sp-2);border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
+    <button class="btn" onclick="shareCard(${r.id})">🔗 Compartilhar link</button>
     <button class="btn-danger" onclick="deleteRef()">🗑️ Excluir referência</button>
   </div>`;
   document.getElementById('modalBody').innerHTML = body;
@@ -338,13 +375,154 @@ function copyTranscription(id) {
     showToast(`Copiado ✓ (${txt.length.toLocaleString('pt-BR')} caracteres)`);
   });
 }
+
+function shareCard(id) {
+  const url = `${window.location.origin}/live#card=${id}`;
+  navigator.clipboard.writeText(url).then(() => showToast('Link copiado ✓'));
+}
+
+function renderTagChips(r) {
+  const tags = r.tags || [];
+  let html = '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">';
+  tags.forEach(t => {
+    html += `<span class="tag-chip">${escapeHtml(t)}<span class="tag-chip-remove" onclick="removeTag('${escapeHtml(t).replace(/'/g,"\\'")}')">×</span></span>`;
+  });
+  html += `<input type="text" id="tagInput" placeholder="+ tag" style="border:1px dashed var(--neutral-200);background:transparent;padding:2px 8px;font-size:var(--text-2xs);border-radius:var(--radius-full);outline:none;width:80px;font-family:var(--font-ui)" onkeydown="if(event.key==='Enter'){event.preventDefault();addTag(this.value);this.value='';}">`;
+  html += '</div>';
+  return html;
+}
+
+async function addTag(rawTag) {
+  const tag = (rawTag || '').trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9_-]/g,'');
+  if (!tag) return;
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const cur = r.tags || [];
+  if (cur.includes(tag)) { showToast('Tag já existe'); return; }
+  const next = [...cur, tag];
+  try {
+    const res = await fetch(MUTATE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op: 'update_tags', id: CURRENT_REF_ID, tags: next })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    r.tags = next;
+    document.getElementById('tagsView').innerHTML = renderTagChips(r);
+    showToast('Tag adicionada ✓');
+    render();
+  } catch (e) {
+    showToast('Erro: ' + e.message);
+  }
+}
+
+async function removeTag(tag) {
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const next = (r.tags || []).filter(t => t !== tag);
+  try {
+    const res = await fetch(MUTATE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op: 'update_tags', id: CURRENT_REF_ID, tags: next })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    r.tags = next;
+    document.getElementById('tagsView').innerHTML = renderTagChips(r);
+    showToast('Tag removida ✓');
+    render();
+  } catch (e) {
+    showToast('Erro: ' + e.message);
+  }
+}
+
+// Pending refs tracking (E2-S6)
+const PENDING_KEY = 'case-refs:pending-ids';
+let PENDING_IDS = new Set(JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'));
+
+function savePending() { localStorage.setItem(PENDING_KEY, JSON.stringify([...PENDING_IDS])); }
+function addPending(payload) {
+  // Identifica por url+timestamp (sem id ainda)
+  const key = (payload.url || '') + '|' + payload.created_at;
+  PENDING_IDS.add(key);
+  savePending();
+  updatePendingBanner();
+}
+function updatePendingBanner() {
+  const banner = document.getElementById('pendingBanner');
+  if (!banner) return;
+  if (!PENDING_IDS.size) { banner.classList.remove('show'); return; }
+  banner.innerHTML = `⏳ <strong>${PENDING_IDS.size}</strong> referência(s) processando…`;
+  banner.classList.add('show');
+}
+function checkPendingComplete() {
+  if (!PENDING_IDS.size) return;
+  // Considera pendente como "processado" se algum item recente apareceu nos últimos 10 min com mesma URL
+  const recent = DATA.filter(r => r.created_at && (Date.now() - new Date(r.created_at).getTime()) < 10*60*1000);
+  const completed = [];
+  PENDING_IDS.forEach(key => {
+    const url = key.split('|')[0];
+    const match = recent.find(r => r.url === url || r.shortcode && url.includes(r.shortcode));
+    if (match) {
+      completed.push({ key, ref: match });
+      PENDING_IDS.delete(key);
+    }
+  });
+  if (completed.length) {
+    savePending();
+    updatePendingBanner();
+    completed.forEach(c => {
+      showToast(`✓ @${c.ref.perfil} processado`);
+      if (Notification.permission === 'granted') {
+        new Notification('case-refs', { body: `@${c.ref.perfil} pronto`, icon: c.ref.thumb_url || '/favicon.ico' });
+      }
+    });
+  }
+}
 function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('modalPlayer').innerHTML='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
 document.querySelectorAll('.tab-main').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab-main').forEach(t=>t.classList.remove('active'));b.classList.add('active');render();}));
-['q','trilha','etapa','periodo','ordem'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+['q','trilha','etapa','periodo','ordem','dateFrom','dateTo'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+document.getElementById('periodo').addEventListener('change', e => {
+  const isCustom = e.target.value === 'custom';
+  document.getElementById('dateFrom').style.display = isCustom ? '' : 'none';
+  document.getElementById('dateTo').style.display = isCustom ? '' : 'none';
+  if (isCustom && !document.getElementById('dateTo').value) {
+    const today = new Date().toISOString().slice(0,10);
+    const lastWeek = new Date(Date.now() - 7*86400000).toISOString().slice(0,10);
+    document.getElementById('dateFrom').value = lastWeek;
+    document.getElementById('dateTo').value = today;
+    render();
+  }
+});
 document.getElementById('reload').addEventListener('click',load);
+
+// Deep-link: abrir card específico via #card=ID
+function openCardFromHash() {
+  const m = (window.location.hash || '').match(/#card=(\d+)/);
+  if (!m) return;
+  const id = parseInt(m[1]);
+  let tries = 0;
+  const tryOpen = () => {
+    if (DATA.find(r => r.id === id)) {
+      openModal(id);
+      const el = document.querySelector(`[data-card-id="${id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (tries++ < 30) {
+      setTimeout(tryOpen, 200);
+    } else {
+      showToast('Referência não encontrada (pode ter sido excluída)');
+    }
+  };
+  tryOpen();
+}
+window.addEventListener('hashchange', openCardFromHash);
+window.addEventListener('load', openCardFromHash);
 load();
 setInterval(load, 30000);
+
+updatePendingBanner();
+if ('Notification' in window && Notification.permission === 'default' && PENDING_IDS.size) {
+  Notification.requestPermission();
+}
 </script>
 </body></html>

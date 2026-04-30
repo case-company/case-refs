@@ -160,10 +160,20 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
       <h3 class="modal-title">Adicionar referência</h3>
       <button class="modal-close" onclick="closeForm()">×</button>
     </div>
+    <div style="padding:var(--sp-3) var(--sp-6) 0;display:flex;justify-content:flex-end">
+      <label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--text-xs);color:var(--cream-700);cursor:pointer">
+        <input type="checkbox" id="f_bulkMode" onchange="toggleBulkMode(this.checked)" style="cursor:pointer"> Adicionar várias de uma vez
+      </label>
+    </div>
     <div class="form-body">
-      <div class="form-row">
+      <div class="form-row" id="f_singleRow">
         <label>Link do perfil ou publicação</label>
         <input type="text" id="f_input" placeholder="https://www.instagram.com/usuario/  ou  https://www.instagram.com/p/SHORTCODE/">
+      </div>
+      <div class="form-row" id="f_bulkRow" style="display:none">
+        <label>Links (um por linha — perfis ou publicações)</label>
+        <textarea id="f_bulkInput" rows="6" placeholder="https://www.instagram.com/usuario1/&#10;https://www.instagram.com/p/CODIGO1/&#10;@usuario2&#10;https://www.instagram.com/reel/CODIGO2/"></textarea>
+        <div id="f_bulkPreview" style="margin-top:var(--sp-2);font-size:var(--text-xs);color:var(--cream-700)"></div>
       </div>
       <div class="form-row">
         <label>Trilha</label>
@@ -178,7 +188,7 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
       </div>
     </div>
     <div class="form-foot">
-      <span style="font-size:var(--text-xs);color:var(--cream-700)">Aparece aqui depois de processado (transcrição, capa e classificação automáticas)</span>
+      <span style="font-size:var(--text-xs);color:var(--cream-700)">Aparece em /live depois de processado (transcrição, capa e classificação automáticas)</span>
       <button class="btn btn-accent" id="btnAdd" onclick="addReference()">Adicionar</button>
     </div>
   </div>
@@ -212,15 +222,26 @@ function parseInput(raw) {
   }
   return null;
 }
-async function addReference() {
-  const raw = (document.getElementById('f_input').value || '').trim();
-  if (!raw) { showToast('Informe um link ou @usuário'); return; }
-  const base = parseInput(raw);
-  if (!base) { showToast('Link inválido — use perfil (@user) ou publicação (.../p/CODIGO/)'); return; }
+function toggleBulkMode(isBulk) {
+  document.getElementById('f_singleRow').style.display = isBulk ? 'none' : '';
+  document.getElementById('f_bulkRow').style.display = isBulk ? '' : 'none';
+  document.getElementById('btnAdd').textContent = isBulk ? 'Adicionar todas' : 'Adicionar';
+  if (isBulk) updateBulkPreview();
+}
 
-  const payload = Object.assign({}, base, {
-    trilha: document.getElementById('f_trilha_uni').value,
-    notas: document.getElementById('f_notas_uni').value || '',
+function updateBulkPreview() {
+  const txt = document.getElementById('f_bulkInput').value || '';
+  const lines = txt.split('\n').map(l => l.trim()).filter(l => l);
+  const valid = lines.filter(l => parseInput(l)).length;
+  const invalid = lines.length - valid;
+  const el = document.getElementById('f_bulkPreview');
+  if (!lines.length) { el.textContent = ''; return; }
+  el.innerHTML = `<strong>${valid}</strong> link(s) válido(s)` + (invalid ? ` · <span style="color:var(--danger)">${invalid} inválido(s) (serão ignorados)</span>` : '');
+}
+
+function buildPayload(parsed, trilha, notas) {
+  const payload = Object.assign({}, parsed, {
+    trilha, notas: notas || '',
     origem: 'manual_form',
     created_at: new Date().toISOString()
   });
@@ -232,17 +253,62 @@ async function addReference() {
     payload.etapa_funil = null;
     payload.pipeline = { actor: 'apify/instagram-scraper', transcricao: 'assemblyai', analise_visual: 'gemini' };
   }
+  return payload;
+}
 
+function trackPending(payload) {
+  // Salva em localStorage pra /live detectar quando processar (E2-S6)
+  try {
+    const key = 'case-refs:pending-ids';
+    const cur = JSON.parse(localStorage.getItem(key) || '[]');
+    cur.push((payload.url || '') + '|' + payload.created_at);
+    localStorage.setItem(key, JSON.stringify(cur));
+  } catch (e) {}
+}
+
+async function addReference() {
+  const isBulk = document.getElementById('f_bulkMode').checked;
+  const trilha = document.getElementById('f_trilha_uni').value;
+  const notas = document.getElementById('f_notas_uni').value || '';
   const btn = document.getElementById('btnAdd');
   const orig = btn.textContent;
+
+  if (isBulk) {
+    const lines = (document.getElementById('f_bulkInput').value || '').split('\n').map(l => l.trim()).filter(l => l);
+    const parsed = lines.map(l => ({ raw: l, parsed: parseInput(l) })).filter(x => x.parsed);
+    if (!parsed.length) { showToast('Nenhum link válido'); return; }
+
+    btn.disabled = true;
+    let ok = 0, fail = [];
+    for (let i = 0; i < parsed.length; i++) {
+      btn.textContent = `Enviando ${i+1}/${parsed.length}...`;
+      const payload = buildPayload(parsed[i].parsed, trilha, notas);
+      try {
+        const res = await fetch(QUEUE_WEBHOOK, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        if (res.ok) { ok++; trackPending(payload); }
+        else fail.push(parsed[i].raw);
+      } catch (e) { fail.push(parsed[i].raw); }
+    }
+    showToast(`${ok} enviada(s) ✓` + (fail.length ? ` · ${fail.length} falharam` : ''));
+    btn.textContent = ok === parsed.length ? 'Tudo enviado ✓' : `Reenviar ${fail.length}`;
+    if (fail.length) document.getElementById('f_bulkInput').value = fail.join('\n');
+    else document.getElementById('f_bulkInput').value = '';
+    document.getElementById('f_notas_uni').value = '';
+    setTimeout(() => { btn.disabled = false; btn.textContent = orig; if (!fail.length) closeForm(); }, 1800);
+    return;
+  }
+
+  const raw = (document.getElementById('f_input').value || '').trim();
+  if (!raw) { showToast('Informe um link ou @usuário'); return; }
+  const base = parseInput(raw);
+  if (!base) { showToast('Link inválido — use perfil (@user) ou publicação (.../p/CODIGO/)'); return; }
+  const payload = buildPayload(base, trilha, notas);
+
   btn.disabled = true; btn.textContent = 'Enviando...';
   try {
-    const res = await fetch(QUEUE_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    const res = await fetch(QUEUE_WEBHOOK, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    trackPending(payload);
     showToast(payload.type === 'perfil' ? 'Perfil na fila ✓ — vai aparecer em alguns minutos' : 'Publicação na fila ✓ — vai aparecer em alguns minutos');
     btn.textContent = 'Enviado ✓';
     document.getElementById('f_input').value = '';
@@ -253,6 +319,11 @@ async function addReference() {
     btn.textContent = orig; btn.disabled = false;
   }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const bulkInput = document.getElementById('f_bulkInput');
+  if (bulkInput) bulkInput.addEventListener('input', updateBulkPreview);
+});
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
