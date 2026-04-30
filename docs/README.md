@@ -37,13 +37,17 @@ docs/
 
 ## Roadmap visual
 
-| Horizonte | Epic | Stories | Estimate total |
-|---|---|---|---|
-| Imediato | EPIC-01 Quick Wins | 4 | ~1 dia |
-| Curto prazo | EPIC-02 Curadoria Power Tools | 6 | ~2-3 dias |
-| Médio prazo | EPIC-03 Intelligence & Integration | 6 | ~8-12 dias |
-| Longo prazo | EPIC-04 AI & Mobile | 3 | ~3-4 semanas |
-| **Total** | **4 epics** | **19 stories** | **~6 semanas** |
+| Horizonte | Epic | Stories | Estimate total | Status |
+|---|---|---|---|---|
+| Imediato | EPIC-01 Quick Wins | 4 (1 done) | ~1 dia | 🟡 Em progresso |
+| Curto prazo | EPIC-02 Curadoria Power Tools | 6 | ~2-3 dias | 🔵 Ready |
+| Médio prazo | EPIC-03 Intelligence & Integration | 6 | ~8-12 dias | 🔵 Ready |
+| Longo prazo | EPIC-04 AI & Mobile | 3 | ~3-4 semanas | 🟣 Discovery |
+| **Total** | **4 epics** | **19 stories (1 done)** | **~6 semanas** | |
+
+## Stories concluídas
+
+- ✅ **E1-S1** — Domínio customizado `refs.casein.com.br` (2026-04-30)
 
 ## Como contribuir
 

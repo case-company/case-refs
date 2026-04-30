@@ -14,10 +14,14 @@ Fechar 4 gaps óbvios de UX e segurança que travam adoção do time. Tudo é pe
 
 ## Stories
 
-- [ ] [E1-S1: Domínio customizado refs.case.com.br](../stories/E1-S1-dominio-customizado.md)
+- [x] ✅ [E1-S1: Domínio customizado refs.casein.com.br](../stories/E1-S1-dominio-customizado.md) — concluído 2026-04-30
 - [ ] [E1-S2: Proteção por senha (Vercel Password Protection)](../stories/E1-S2-protecao-por-senha.md)
 - [ ] [E1-S3: Edição inline de notas em cards](../stories/E1-S3-edicao-inline-notas.md)
 - [ ] [E1-S4: Botão deletar referência com confirm](../stories/E1-S4-botao-deletar.md)
+
+## Progresso
+
+**1/4 stories concluídas** — domínio `refs.casein.com.br` no ar com SSL.
 
 ## Critérios de Sucesso
 
