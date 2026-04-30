@@ -1,7 +1,7 @@
 # E2-S4 — Tag livre por card
 
 **Epic:** EPIC-02 — Curadoria Power Tools
-**Status:** 🟡 Frontend Done — aguarda backend (webhook + migration)
+**Status:** ✅ Done
 **Concluído front em:** 2026-04-30
 
 ## Implementação frontend (no ar)

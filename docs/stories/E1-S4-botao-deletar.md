@@ -1,7 +1,7 @@
 # E1-S4 — Botão deletar referência com confirm
 
 **Epic:** EPIC-01 — Quick Wins
-**Status:** 🟡 Frontend Done — aguarda backend (webhook n8n + migration)
+**Status:** ✅ Done
 **Prioridade:** P0
 **Estimate:** 1.5h (front) + 30min (backend, compartilhado com E1-S3)
 **Owner:** Kaique

@@ -1,7 +1,7 @@
 # E1-S3 — Edição inline de notas em cards
 
 **Epic:** EPIC-01 — Quick Wins
-**Status:** 🟡 Frontend Done — aguarda backend (webhook n8n + migration)
+**Status:** ✅ Done
 **Prioridade:** P0
 **Estimate:** 2h (front) + 30min (backend)
 **Owner:** Kaique

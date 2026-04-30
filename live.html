@@ -282,7 +282,7 @@ function render(){
   document.getElementById('results').innerHTML = h;
 }
 
-const MUTATE_WEBHOOK = 'https://webhook.manager01.feynmanproject.com/webhook/case-refs-mutate';
+const MUTATE_WEBHOOK = 'https://knusqfbvhsqworzyhvip.supabase.co/functions/v1/case-refs-mutate';
 let CURRENT_REF_ID = null;
 
 function openModal(id){
@@ -354,7 +354,7 @@ async function saveNotes() {
   try {
     const res = await fetch(MUTATE_WEBHOOK, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
       body: JSON.stringify({ op: 'update_note', id: CURRENT_REF_ID, notas: txt })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -375,7 +375,7 @@ async function deleteRef() {
   try {
     const res = await fetch(MUTATE_WEBHOOK, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
       body: JSON.stringify({ op: 'soft_delete', id: CURRENT_REF_ID })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -571,7 +571,7 @@ async function addTag(rawTag) {
   try {
     const res = await fetch(MUTATE_WEBHOOK, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
       body: JSON.stringify({ op: 'update_tags', id: CURRENT_REF_ID, tags: next })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -590,7 +590,7 @@ async function removeTag(tag) {
   try {
     const res = await fetch(MUTATE_WEBHOOK, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
       body: JSON.stringify({ op: 'update_tags', id: CURRENT_REF_ID, tags: next })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);

@@ -17,13 +17,13 @@ Reduzir fricção do uso diário com 6 power tools que transformam o banco de "l
 - [x] ✅ [E2-S1: Compartilhamento de card via deep-link](../stories/E2-S1-deep-link-card.md) — concluído 2026-04-30
 - [x] ✅ [E2-S2: Cópia de transcrição com 1 clique](../stories/E2-S2-copia-transcricao.md) — concluído 2026-04-30
 - [x] ✅ [E2-S3: Filtro por data customizada (range)](../stories/E2-S3-filtro-data-custom.md) — concluído 2026-04-30
-- [x] 🟡 [E2-S4: Tag livre por card](../stories/E2-S4-tag-livre.md) — frontend done, aguarda webhook + migration
+- [x] ✅ [E2-S4: Tag livre por card](../stories/E2-S4-tag-livre.md) — concluído 2026-04-30
 - [x] ✅ [E2-S5: Bulk add (vários de uma vez)](../stories/E2-S5-bulk-add.md) — concluído 2026-04-30
 - [x] ✅ [E2-S6: Notificação quando processamento termina](../stories/E2-S6-notificacao-processamento.md) — concluído 2026-04-30 (heurística client)
 
 ## Progresso
 
-**6/6 stories com frontend done.** 5 totalmente concluídas, 1 (S4 tags) aguardando 1 migration + 1 case no webhook compartilhado.
+**6/6 stories ✅ Done.**
 
 ## Critérios de Sucesso
 

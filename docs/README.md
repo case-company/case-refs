@@ -39,22 +39,22 @@ docs/
 
 | Horizonte | Epic | Stories | Estimate total | Status |
 |---|---|---|---|---|
-| Imediato | EPIC-01 Quick Wins | 4 (4 front done) | ~1 dia | 🟡 Backend pendente |
-| Curto prazo | EPIC-02 Curadoria Power Tools | 6 (6 front done, 5 ✅ + 1 🟡) | ~2-3 dias | 🟡 Backend pendente (1 case webhook) |
+| Imediato | EPIC-01 Quick Wins | 4 (4 ✅) | ~1 dia | ✅ Done |
+| Curto prazo | EPIC-02 Curadoria Power Tools | 6 (6 ✅) | ~2-3 dias | ✅ Done |
 | Médio prazo | EPIC-03 Intelligence & Integration | 6 (3 ✅ + 3 🔵) | ~8-12 dias | 🟡 Parcial |
 | Longo prazo | EPIC-04 AI & Mobile | 3 (1 ✅ + 2 🔵) | ~3-4 semanas | 🟡 Parcial |
-| **Total** | **4 epics** | **19 stories (13 implementadas)** | **~6 semanas** | |
+| **Total** | **4 epics** | **19 stories (14 ✅ + 5 🔵)** | **~6 semanas** | |
 
 ## Stories concluídas
 
 - ✅ **E1-S1** — Domínio customizado `refs.casein.com.br` (2026-04-30)
 - ✅ **E1-S2** — Proteção por senha gate client-side (2026-04-30)
-- 🟡 **E1-S3** — Edição inline de notas: frontend done, aguarda webhook n8n + migration (2026-04-30)
-- 🟡 **E1-S4** — Botão deletar com confirm: frontend done, aguarda webhook n8n + migration (2026-04-30)
+- ✅ **E1-S3** — Edição inline de notas (2026-04-30)
+- ✅ **E1-S4** — Botão deletar com soft-delete (2026-04-30)
 - ✅ **E2-S1** — Deep-link de card (2026-04-30)
 - ✅ **E2-S2** — Cópia de transcrição (2026-04-30)
 - ✅ **E2-S3** — Filtro por data customizada (2026-04-30)
-- 🟡 **E2-S4** — Tag livre por card: frontend done, aguarda webhook + migration (2026-04-30)
+- ✅ **E2-S4** — Tag livre por card (2026-04-30)
 - ✅ **E2-S5** — Bulk add (2026-04-30)
 - ✅ **E2-S6** — Notificação processamento via heurística client (2026-04-30)
 - ✅ **E3-S1** — Dashboard de uso em /dashboard (2026-04-30)
