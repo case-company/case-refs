@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banco de Referências</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
+:root{--brand-700:#554d33;--accent-500:#d4703a;--cream-50:#faf9f7;--cream-100:#f5f4f0;--cream-700:#807a67;--neutral-200:#e5e3dc;--neutral-800:#2e2b25;--font-display:"Optima","Times New Roman",serif;--font-ui:"Open Sauce Sans",system-ui,sans-serif;--shadow-sm:0 1px 3px rgba(85,77,51,.1);--shadow-lg:0 12px 24px rgba(85,77,51,.12);--radius-lg:12px;--radius-xl:16px}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:var(--neutral-800)}
+.container{max-width:920px;margin:0 auto;padding:64px 24px}
+.header-title{font-family:var(--font-display);font-size:2.6rem;font-weight:700;color:var(--brand-700);margin:0 0 8px;letter-spacing:-.02em}
+.header-subtitle{margin:0 0 48px;color:var(--cream-700);font-size:1rem;max-width:620px;line-height:1.5}
+.cards{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.card{background:white;border-radius:var(--radius-xl);padding:32px;box-shadow:var(--shadow-sm);text-decoration:none;color:inherit;transition:all .25s ease;border:1px solid var(--neutral-200);display:flex;flex-direction:column;gap:12px}
+.card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);border-color:var(--brand-700)}
+.eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent-500);font-weight:700}
+.card h2{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--brand-700);margin:0}
+.card p{margin:0;color:var(--cream-700);font-size:.9rem;line-height:1.55}
+.card .arrow{margin-top:auto;color:var(--accent-500);font-weight:600;font-size:.9rem}
+.card .arrow::after{content:" →"}
+.footer{margin-top:64px;font-size:.75rem;color:var(--cream-700);text-align:center}
+</style>
+</head><body>
+<div class="container">
+  <h1 class="header-title">Banco de Referências</h1>
+  <p class="header-subtitle">Material de apoio para as trilhas Mentoria e Clínica. Cada referência tem prévia visual, player embutido e transcrição.</p>
+  <div class="cards">
+    <a class="card" href="trilhas.html">
+      <span class="eyebrow">Banco 1</span>
+      <h2>Trilhas — Mentoria + Clínica</h2>
+      <p>Banco de referências de conteúdo organizado por etapa do funil (Descoberta, Confiança, Ação) e tipo de conteúdo. Cada item com prévia visual, player e transcrição.</p>
+      <span class="arrow">Abrir banco</span>
+    </a>
+    <a class="card" href="posts.html">
+      <span class="eyebrow">Banco 2</span>
+      <h2>Posts Fixados + Destaques</h2>
+      <p>Posts fixados (top 3) e capas de destaques dos perfis de referência das trilhas. Categorizados por objetivo estratégico.</p>
+      <span class="arrow">Abrir banco</span>
+    </a>
+    <a class="card" href="live.html">
+      <span class="eyebrow">Live</span>
+      <h2>Banco Live (cadastros via form)</h2>
+      <p>Referências adicionadas pelo botão "+ Adicionar". Aparecem aqui assim que terminam de ser processadas (capa, transcrição e classificação automáticas).</p>
+      <span class="arrow">Abrir banco live</span>
+    </a>
+  </div>
+  <div class="footer">Banco de referências Case</div>
+</div>
+</body></html>
