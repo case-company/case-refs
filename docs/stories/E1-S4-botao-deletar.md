@@ -1,77 +1,70 @@
 # E1-S4 — Botão deletar referência com confirm
 
 **Epic:** EPIC-01 — Quick Wins
-**Status:** Ready
+**Status:** 🟡 Frontend Done — aguarda backend (webhook n8n + migration)
 **Prioridade:** P0
-**Estimate:** 1.5h
+**Estimate:** 1.5h (front) + 30min (backend, compartilhado com E1-S3)
 **Owner:** Kaique
-**Dependências:** Endpoint n8n `/delete-ref` (criar) + E1-S2 (auth recomendado antes)
+**Concluído front em:** 2026-04-30
 
 ---
 
 ## User Story
 
-Como **curador**, quero **remover** uma referência cadastrada errada (URL inválida, duplicada, conteúdo fora do escopo), pra **manter o banco limpo** sem precisar abrir Supabase.
+Como **curador**, quero **remover** uma referência cadastrada errada (URL inválida, duplicada, fora do escopo), pra **manter o banco limpo** sem precisar abrir Supabase.
 
-## Contexto
+## Estado atual
 
-Hoje: ref errada fica lá pra sempre. Pra deletar, abre Supabase Studio, encontra a row, deleta manualmente. Curador médio não tem acesso ao Supabase.
+### ✅ Frontend (deployado em produção)
 
-## Critérios de Aceite
+Em `/live`, ao abrir modal de qualquer card:
 
-1. **No modal de detalhes** da ref, botão **"🗑️ Excluir"** discreto (canto inferior, vermelho)
-2. Clicar abre **confirm dialog** com:
-   - Texto: "Excluir esta referência? Essa ação não pode ser desfeita."
-   - Mostra perfil + caption preview pra confirmar visualmente
-   - Botões "Cancelar" (default) e "Excluir" (vermelho)
-3. **Confirmar** chama `POST /delete-ref/{id}` no webhook n8n
-4. Em sucesso: modal fecha, card some da lista (otimista), toast "Excluído ✓"
-5. Em erro: card volta, toast "Erro: {msg}"
-6. **Soft-delete preferido** (`deleted_at` timestamp) ao invés de DELETE — permite undelete depois
-7. **View pública filtra** `WHERE deleted_at IS NULL`
+- Botão **"🗑️ Excluir referência"** no rodapé do modal (estilo `btn-danger`, vermelho)
+- Clicar dispara **confirm dialog nativo**:
+  - "Excluir referência de @{perfil}?"
+  - Mostra preview da caption (80 chars)
+  - "Essa ação não pode ser desfeita pela interface."
+- Confirmar chama `POST /webhook/case-refs-mutate`
+  - Body: `{ op: 'soft_delete', id: <ref_id> }`
+- Em sucesso: card some da lista (otimista), modal fecha, toast "Excluído ✓"
+- Em erro: toast "Erro: HTTP {status}", card permanece
 
-## Notas Técnicas
+### ⏳ Backend (pendente — compartilhado com E1-S3)
 
-```js
-async function deleteRef(refId, perfilLabel, captionPreview) {
-  if (!confirm(`Excluir referência de @${perfilLabel}?\n\n"${captionPreview.slice(0,80)}..."\n\nEssa ação não pode ser desfeita.`)) return;
-  const res = await fetch(WEBHOOK_DELETE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ op: 'soft_delete', id: refId })
-  });
-  if (!res.ok) { showToast('Erro: HTTP ' + res.status); return; }
-  showToast('Excluído ✓');
-  closeModal();
-  // re-render list (filter out deleted)
-  DATA = DATA.filter(r => r.id !== refId);
-  render();
-}
-```
-
-## Migration Supabase
+Mesma migration + webhook descritos em E1-S3. **Nota:** soft-delete via `deleted_at` permite restauração via Supabase Studio se erro.
 
 ```sql
-ALTER TABLE referencias_conteudo ADD COLUMN deleted_at timestamptz;
+ALTER TABLE referencias_conteudo ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 
--- Update view pra filtrar
 CREATE OR REPLACE VIEW v_referencias_publicas AS
   SELECT * FROM referencias_conteudo WHERE deleted_at IS NULL;
 ```
 
-## Endpoint n8n necessário
+n8n switch case:
+```
+case 'soft_delete':
+  UPDATE referencias_conteudo SET deleted_at = now() WHERE id = $body.id
+  Return { ok: true, id }
+```
 
-- Path: `/webhook/case-refs-delete`
-- Método: POST
-- Body: `{ op: 'soft_delete', id: number }`
-- Faz: `UPDATE referencias_conteudo SET deleted_at = now() WHERE id = $1`
-- Retorna: `{ ok: true, id }` ou `{ ok: false, error }`
+## Critérios de Aceite
 
-## Definition of Done
+1. ✅ Botão "Excluir" presente no modal de `/live`
+2. ✅ Confirm dialog mostra contexto (perfil + caption)
+3. ✅ Card removido otimisticamente da UI
+4. ⏳ Soft-delete persiste no Supabase **(depende do webhook)**
+5. ⏳ View pública filtra deletadas **(depende da migration)**
+6. ✅ Erro de rede mostra toast claro
 
-- [ ] Botão "Excluir" presente nos modais de `/posts` e `/live`
-- [ ] Confirm dialog mostra contexto (perfil + caption)
-- [ ] Soft-delete via webhook funciona end-to-end
-- [ ] View pública filtra deletadas
-- [ ] Migration Supabase aplicada
-- [ ] Erro de rede mostra toast claro
+## Como destravar
+
+Mesmas 4 etapas da E1-S3 (compartilham webhook + migration).
+
+## Não cobrimos
+
+- Botão "Restaurar" pra desfazer delete na UI — fica em iteração futura. Hoje, restauração via Supabase Studio (`UPDATE ... SET deleted_at = NULL`).
+- Hard delete (`DELETE FROM`) — soft-delete é mais seguro.
+
+## Arquivos modificados
+
+- `live.html` — função `deleteRef()` + CSS `.btn-danger`

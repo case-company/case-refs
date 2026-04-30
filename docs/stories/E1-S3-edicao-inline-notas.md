@@ -1,73 +1,76 @@
 # E1-S3 — Edição inline de notas em cards
 
 **Epic:** EPIC-01 — Quick Wins
-**Status:** Ready
+**Status:** 🟡 Frontend Done — aguarda backend (webhook n8n + migration)
 **Prioridade:** P0
-**Estimate:** 2h
+**Estimate:** 2h (front) + 30min (backend)
 **Owner:** Kaique
-**Dependências:** Endpoint n8n `/update-ref` (criar)
+**Concluído front em:** 2026-04-30
 
 ---
 
 ## User Story
 
-Como **curador**, quero **editar a nota** de uma referência sem precisar deletar e recriar, pra **iterar contexto** ("ah, descobri que esse ref tá funcionando bem na fase Confiança").
+Como **curador**, quero **editar a nota** de uma referência sem precisar deletar e recriar.
 
-## Contexto
+## Estado atual
 
-Hoje: nota é definida no momento de adicionar. Pra mudar, precisa deletar + cadastrar de novo (perde transcrição reprocessada, perde data original).
-Queremos: editar nota in-place no modal/card.
+### ✅ Frontend (deployado em produção)
+
+Em `/live`, ao abrir modal de qualquer card:
+
+- Seção **Notas** mostra texto atual + botão **"✏️ Editar"**
+- Clicar abre **textarea editável** + botões "Salvar" / "Cancelar"
+- **Salvar** chama `POST https://webhook.manager01.feynmanproject.com/webhook/case-refs-mutate`
+  - Body: `{ op: 'update_note', id: <ref_id>, notas: <texto_novo> }`
+- Em sucesso: textarea fecha, texto novo aparece, toast "Nota salva ✓"
+- Em erro (webhook 404 etc): toast "Erro: HTTP {status}"
+- Atualiza DATA local em memória pra refletir sem reload
+
+### ⏳ Backend (pendente — bloqueador pra funcionar end-to-end)
+
+**Webhook n8n a criar** (path: `/case-refs-mutate`):
+
+```
+Trigger: Webhook (POST)
+Path: case-refs-mutate
+
+Switch on body.op:
+  case 'update_note':
+    UPDATE referencias_conteudo SET notas = $body.notas WHERE id = $body.id
+    Return { ok: true, id, notas }
+  case 'soft_delete':
+    UPDATE referencias_conteudo SET deleted_at = now() WHERE id = $body.id
+    Return { ok: true, id }
+```
+
+**Migration Supabase necessária** (compartilhada com E1-S4):
+
+```sql
+-- Para soft delete (E1-S4)
+ALTER TABLE referencias_conteudo ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+
+-- Atualizar view pública pra filtrar deletadas
+CREATE OR REPLACE VIEW v_referencias_publicas AS
+  SELECT * FROM referencias_conteudo WHERE deleted_at IS NULL;
+```
 
 ## Critérios de Aceite
 
-1. **No modal de detalhes** da ref (ao clicar no card), seção "Notas" tem botão **"✏️ Editar"**
-2. Clicar abre **textarea editável** no lugar do texto
-3. Botões **"Salvar"** e **"Cancelar"**
-4. **Salvar** chama `PATCH /update-ref/{id}` no webhook n8n com `{ id, notas: novoTexto }`
-5. Em sucesso: textarea fecha, texto novo aparece, toast "Salvo ✓"
-6. Em erro: mantém modo edição, toast "Erro: {msg}"
-7. **Não permite ediçāo sem auth** (depois que E1-S2 entrar)
+1. ✅ Botão "Editar" aparece no modal de detalhes em `/live`
+2. ✅ Clicar transforma texto em textarea editável
+3. ✅ Salvar dispara webhook
+4. ✅ Erro de rede mostra toast (não silencia)
+5. ⏳ Reload da página mostra nota atualizada **(depende do webhook + migration)**
+6. ⏳ Endpoint n8n criado e testado **(pendente)**
 
-## Notas Técnicas
+## Como destravar
 
-```js
-// posts.html, live.html — modal de detalhes
-function editNote(refId) {
-  const sec = document.getElementById('noteSec');
-  const cur = sec.dataset.value || '';
-  sec.innerHTML = `
-    <textarea id="noteEdit" rows="3">${escapeHtml(cur)}</textarea>
-    <button onclick="saveNote('${refId}')">Salvar</button>
-    <button onclick="cancelNote()">Cancelar</button>
-  `;
-  document.getElementById('noteEdit').focus();
-}
+1. Aplicar migration no Supabase Case
+2. Criar workflow n8n com path `/case-refs-mutate`
+3. Testar: abrir `/live`, editar nota de uma ref, salvar
+4. Atualizar status pra `✅ Done`
 
-async function saveNote(id) {
-  const txt = document.getElementById('noteEdit').value;
-  const res = await fetch(WEBHOOK_UPDATE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ op: 'update_note', id, notas: txt })
-  });
-  if (!res.ok) { showToast('Erro: HTTP ' + res.status); return; }
-  showToast('Salvo ✓');
-  // re-render note section
-}
-```
+## Arquivos modificados
 
-## Endpoint n8n necessário
-
-- Path: `/webhook/case-refs-update`
-- Método: POST
-- Body: `{ op: 'update_note', id: number, notas: string }`
-- Faz: `UPDATE referencias_conteudo SET notas = $1 WHERE id = $2`
-- Retorna: `{ ok: true, id, notas }` ou `{ ok: false, error }`
-
-## Definition of Done
-
-- [ ] Botão "Editar" aparece em todos os modais que mostram nota
-- [ ] Edição salva no Supabase via webhook
-- [ ] Reload da página mostra nota atualizada
-- [ ] Endpoint n8n criado, testado com curl
-- [ ] Erro de rede mostra toast (não silencia)
+- `live.html` — função `editNotes()`, `saveNotes()`, `cancelEditNotes()` + CSS `.btn-mini`

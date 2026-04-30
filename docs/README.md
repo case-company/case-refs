@@ -39,15 +39,18 @@ docs/
 
 | Horizonte | Epic | Stories | Estimate total | Status |
 |---|---|---|---|---|
-| Imediato | EPIC-01 Quick Wins | 4 (1 done) | ~1 dia | 🟡 Em progresso |
+| Imediato | EPIC-01 Quick Wins | 4 (4 front done) | ~1 dia | 🟡 Backend pendente |
 | Curto prazo | EPIC-02 Curadoria Power Tools | 6 | ~2-3 dias | 🔵 Ready |
 | Médio prazo | EPIC-03 Intelligence & Integration | 6 | ~8-12 dias | 🔵 Ready |
 | Longo prazo | EPIC-04 AI & Mobile | 3 | ~3-4 semanas | 🟣 Discovery |
-| **Total** | **4 epics** | **19 stories (1 done)** | **~6 semanas** | |
+| **Total** | **4 epics** | **19 stories (4 front done)** | **~6 semanas** | |
 
 ## Stories concluídas
 
 - ✅ **E1-S1** — Domínio customizado `refs.casein.com.br` (2026-04-30)
+- ✅ **E1-S2** — Proteção por senha gate client-side (2026-04-30)
+- 🟡 **E1-S3** — Edição inline de notas: frontend done, aguarda webhook n8n + migration (2026-04-30)
+- 🟡 **E1-S4** — Botão deletar com confirm: frontend done, aguarda webhook n8n + migration (2026-04-30)
 
 ## Como contribuir
 

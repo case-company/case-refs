@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/_auth.js"></script>
 <title>Banco Live — Cadastros via Form</title>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
@@ -63,6 +64,10 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
 .footer{margin-top:var(--sp-12);padding-top:var(--sp-6);border-top:1px solid var(--neutral-200);font-size:var(--text-xs);color:var(--cream-700);text-align:center}
 .btn-add{position:fixed;bottom:var(--sp-6);right:var(--sp-6);z-index:50;padding:var(--sp-4) var(--sp-6);font-size:var(--text-md);font-weight:600;border-radius:var(--radius-full);background:var(--brand-700);color:white;border:none;box-shadow:var(--shadow-lg);cursor:pointer;font-family:var(--font-ui)}
 .btn-add:hover{background:var(--brand-900);transform:translateY(-2px)}
+.btn-mini{padding:2px 8px;font-size:var(--text-2xs);font-weight:600;border-radius:var(--radius-md);border:1px solid var(--neutral-200);background:white;color:var(--cream-700);cursor:pointer;font-family:var(--font-ui)}
+.btn-mini:hover{background:var(--cream-100);color:var(--brand-700)}
+.btn-danger{padding:var(--sp-2) var(--sp-4);font-size:var(--text-sm);font-weight:600;border-radius:var(--radius-md);border:1px solid #f5c2bd;background:white;color:var(--danger);cursor:pointer;font-family:var(--font-ui)}
+.btn-danger:hover{background:#ffebee}
 </style>
 </head><body>
 <div class="container">
@@ -227,8 +232,12 @@ function render(){
   document.getElementById('results').innerHTML = h;
 }
 
+const MUTATE_WEBHOOK = 'https://webhook.manager01.feynmanproject.com/webhook/case-refs-mutate';
+let CURRENT_REF_ID = null;
+
 function openModal(id){
   const r = DATA.find(x=>x.id===id); if(!r) return;
+  CURRENT_REF_ID = id;
   document.getElementById('modalTitle').textContent = `@${r.perfil} — ${r.tipo_estrategico||r.tipo_artefato}`;
   if (r.shortcode){
     document.getElementById('modalPlayer').innerHTML = `<iframe src="https://www.instagram.com/p/${r.shortcode}/embed/captioned/" allow="encrypted-media" scrolling="no"></iframe>`;
@@ -242,10 +251,92 @@ function openModal(id){
     ${r.tem_transcricao?'<span class="badge badge-success">Transcrita</span>':''}
   </div>`;
   if (r.caption) body += `<div class="modal-section"><h4>Caption</h4><div style="font-size:var(--text-sm);white-space:pre-wrap">${escapeHtml(r.caption)}</div></div>`;
-  if (r.transcricao) body += `<div class="modal-section"><h4>Transcrição ${r.language_code?`[${r.language_code}]`:''}</h4><div class="modal-transcript">${escapeHtml(r.transcricao)}</div></div>`;
-  if (r.notas) body += `<div class="modal-section"><h4>Notas</h4><div style="font-size:var(--text-sm);color:var(--cream-700)">${escapeHtml(r.notas)}</div></div>`;
+  if (r.transcricao) body += `<div class="modal-section"><h4>Transcrição ${r.language_code?`[${r.language_code}]`:''} <button class="btn-mini" onclick="copyTranscription(${id})">📋 Copiar</button></h4><div class="modal-transcript">${escapeHtml(r.transcricao)}</div></div>`;
+  body += `<div class="modal-section" id="notesSection">
+    <h4 style="display:flex;justify-content:space-between;align-items:center">
+      <span>Notas</span>
+      <button class="btn-mini" onclick="editNotes()">✏️ Editar</button>
+    </h4>
+    <div id="notesView" style="font-size:var(--text-sm);color:var(--cream-700);white-space:pre-wrap;min-height:1.4em">${escapeHtml(r.notas||'(sem notas)')}</div>
+  </div>`;
+  body += `<div class="modal-section" style="border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
+    <button class="btn-danger" onclick="deleteRef()">🗑️ Excluir referência</button>
+  </div>`;
   document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modal').classList.add('open');
+}
+
+function editNotes() {
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const sec = document.getElementById('notesSection');
+  sec.innerHTML = `
+    <h4>Notas</h4>
+    <textarea id="notesEdit" style="width:100%;min-height:80px;padding:var(--sp-2);border:1px solid var(--neutral-200);border-radius:var(--radius-md);font-family:var(--font-ui);font-size:var(--text-sm);resize:vertical">${escapeHtml(r.notas||'')}</textarea>
+    <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2);justify-content:flex-end">
+      <button class="btn" onclick="cancelEditNotes()">Cancelar</button>
+      <button class="btn btn-primary" id="btnSaveNotes" onclick="saveNotes()">Salvar</button>
+    </div>`;
+  document.getElementById('notesEdit').focus();
+}
+
+function cancelEditNotes() {
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const sec = document.getElementById('notesSection');
+  sec.innerHTML = `
+    <h4 style="display:flex;justify-content:space-between;align-items:center">
+      <span>Notas</span>
+      <button class="btn-mini" onclick="editNotes()">✏️ Editar</button>
+    </h4>
+    <div id="notesView" style="font-size:var(--text-sm);color:var(--cream-700);white-space:pre-wrap;min-height:1.4em">${escapeHtml(r.notas||'(sem notas)')}</div>`;
+}
+
+async function saveNotes() {
+  const txt = document.getElementById('notesEdit').value;
+  const btn = document.getElementById('btnSaveNotes');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const res = await fetch(MUTATE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op: 'update_note', id: CURRENT_REF_ID, notas: txt })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(r) r.notas = txt;
+    cancelEditNotes();
+    showToast('Nota salva ✓');
+    render();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = 'Salvar';
+    showToast('Erro: ' + e.message);
+  }
+}
+
+async function deleteRef() {
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const preview = (r.caption || r.resumo || '').slice(0, 80);
+  if (!confirm(`Excluir referência de @${r.perfil}?\n\n"${preview}${preview.length>=80?'...':''}"\n\nEssa ação não pode ser desfeita pela interface.`)) return;
+  try {
+    const res = await fetch(MUTATE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ op: 'soft_delete', id: CURRENT_REF_ID })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    DATA = DATA.filter(x => x.id !== CURRENT_REF_ID);
+    closeModal();
+    showToast('Excluído ✓');
+    render();
+  } catch (e) {
+    showToast('Erro: ' + e.message);
+  }
+}
+
+function copyTranscription(id) {
+  const r = DATA.find(x=>x.id===id); if(!r) return;
+  const txt = r.transcricao || '';
+  navigator.clipboard.writeText(txt).then(() => {
+    showToast(`Copiado ✓ (${txt.length.toLocaleString('pt-BR')} caracteres)`);
+  });
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('modalPlayer').innerHTML='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
