@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/_auth.js"></script>
+<script src="/_decida.js"></script>
+<title>Como usar — Banco de Referências</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
+:root{
+  --brand-700:#554d33;--brand-900:#35301d;
+  --accent-500:#d4703a;--accent-700:#964627;
+  --cream-50:#faf9f7;--cream-100:#f5f4f0;--cream-300:#e6e3da;--cream-700:#807a67;
+  --neutral-200:#e5e3dc;--neutral-800:#2e2b25;
+  --decida-de:#3b82f6;--decida-cid:#8b5cf6;--decida-a:#ef4444;
+  --font-display:"Optima","Times New Roman",serif;--font-ui:"Open Sauce Sans",system-ui,sans-serif;
+  --shadow-xs:0 1px 2px rgba(85,77,51,.06);--shadow-sm:0 1px 3px rgba(85,77,51,.1);
+  --shadow-lg:0 12px 24px rgba(85,77,51,.12);
+  --radius-md:8px;--radius-lg:12px;--radius-xl:16px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:var(--neutral-800);line-height:1.6}
+.back-home{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;font-size:.8rem;font-weight:600;color:var(--cream-700);text-decoration:none;background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-md);transition:all .2s;box-shadow:var(--shadow-xs)}
+.back-home:hover{color:var(--brand-700);border-color:var(--brand-700);transform:translateX(-2px)}
+.back-bar{max-width:880px;margin:0 auto;padding:24px 24px 0;display:flex;gap:12px;flex-wrap:wrap}
+.container{max-width:880px;margin:0 auto;padding:48px 24px}
+h1.title{font-family:var(--font-display);font-size:2.4rem;font-weight:700;color:var(--brand-700);margin:0 0 12px;letter-spacing:-.02em}
+p.subtitle{margin:0 0 48px;color:var(--cream-700);font-size:1.05rem;line-height:1.55}
+section{margin-bottom:48px}
+h2.section-h{font-family:var(--font-display);font-size:1.45rem;font-weight:600;color:var(--brand-900);margin:0 0 16px;border-bottom:1px solid var(--neutral-200);padding-bottom:8px}
+h3.bloco-h{font-family:var(--font-ui);font-size:1.1rem;font-weight:700;color:var(--brand-700);margin:0 0 8px;display:flex;align-items:center;gap:10px}
+.bloco{background:white;border-radius:var(--radius-xl);padding:24px;margin-bottom:16px;border:1px solid var(--neutral-200);box-shadow:var(--shadow-xs)}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.75rem;font-weight:700;color:white;letter-spacing:.04em}
+.pill-de{background:var(--decida-de)}
+.pill-cid{background:var(--decida-cid)}
+.pill-a{background:var(--decida-a)}
+.mix-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:16px 0}
+.mix-item{background:var(--cream-100);border-radius:var(--radius-lg);padding:16px;text-align:center}
+.mix-item .pct{font-family:var(--font-display);font-size:1.8rem;font-weight:700;color:var(--brand-700);margin:4px 0}
+.mix-item .lbl{font-size:.8rem;color:var(--cream-700);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+ol{padding-left:20px;margin:16px 0}
+ol li{margin-bottom:8px}
+ul.exemplos{padding-left:20px;margin:12px 0;color:var(--neutral-800);font-size:.95rem}
+ul.exemplos li{margin-bottom:6px}
+.callout{background:#fef9f3;border-left:4px solid var(--accent-500);padding:12px 16px;border-radius:0 var(--radius-md) var(--radius-md) 0;margin:16px 0;font-size:.92rem;color:var(--brand-900)}
+.links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.links-grid a{display:block;background:white;padding:14px 16px;border-radius:var(--radius-md);text-decoration:none;color:var(--brand-700);border:1px solid var(--neutral-200);font-weight:600;font-size:.92rem;transition:all .2s}
+.links-grid a:hover{border-color:var(--accent-500);transform:translateX(2px)}
+.footer{margin-top:64px;font-size:.75rem;color:var(--cream-700);text-align:center;border-top:1px solid var(--neutral-200);padding-top:24px}
+.examples-note{background:var(--cream-100);border:1px dashed var(--cream-300);border-radius:var(--radius-md);padding:16px;font-size:.85rem;color:var(--cream-700);font-style:italic;margin:16px 0}
+</style>
+</head><body>
+
+<div class="back-bar">
+  <a class="back-home" href="/">← Banco de Referências</a>
+</div>
+
+<div class="container">
+  <h1 class="title">Como usar o banco</h1>
+  <p class="subtitle">Este é o guia rápido do método DECIDA aplicado às trilhas de conteúdo da CASE. Leia uma vez — depois consulte só quando quiser confirmar o critério de uma etapa.</p>
+
+  <section>
+    <h2 class="section-h">1. O que é DECIDA</h2>
+    <p>DECIDA é o jeito da Queila de organizar conteúdo por <strong>objetivo editorial</strong> — em três grupos. Cada peça que você posta serve a um destes três grupos. Quando você sabe a qual grupo seu próximo conteúdo pertence, o critério de produção, copy e formato fica muito mais simples — porque cada grupo tem propósito diferente.</p>
+    <p>DECIDA não é um passo a passo. É um <strong>mapa</strong>. Você vai navegar pelos três grupos a vida toda — não "termina" um para começar o outro.</p>
+  </section>
+
+  <section>
+    <h2 class="section-h">2. Os três grupos</h2>
+
+    <div class="bloco">
+      <h3 class="bloco-h"><span class="pill pill-de">D+E</span> Descoberta + Engajamento</h3>
+      <p><strong>Propósito.</strong> Ser encontrada por quem ainda não te conhece. Conteúdo que atrai, prende, conecta.</p>
+      <p>Aqui mora história, curiosidade, contraste, ângulo inesperado, opinião forte. O critério principal: <em>a pessoa que nunca te viu entende em segundos por que aquilo é interessante</em>. Não precisa explicar quem você é — precisa entregar valor ou emoção logo.</p>
+      <p><strong>Exemplos do banco:</strong></p>
+      <ul class="exemplos">
+        <li>Reel de história pessoal contando um caso de cliente sem mencionar a oferta.</li>
+        <li>Carrossel com curiosidade do nicho (algo que pouca gente sabe).</li>
+        <li>Vídeo de bastidor que mostra um momento real do trabalho.</li>
+      </ul>
+    </div>
+
+    <div class="bloco">
+      <h3 class="bloco-h"><span class="pill pill-cid">C+I+D</span> Confiança + Identificação + Desejo</h3>
+      <p><strong>Propósito.</strong> Aprofundar o vínculo com quem já te viu. Conteúdo que constrói autoridade, faz a pessoa se reconhecer no que você diz e desperta o desejo pelo resultado que você entrega.</p>
+      <p>Aqui mora prova social, raciocínio do método, transformação de cliente, posicionamento, vulnerabilidade verdadeira. O critério principal: <em>a pessoa precisa pensar "essa é a especialista certa pra mim" — não "essa é uma especialista qualquer"</em>.</p>
+      <p><strong>Exemplos do banco:</strong></p>
+      <ul class="exemplos">
+        <li>Carrossel explicando um conceito do método com exemplo concreto.</li>
+        <li>Reel com depoimento de cliente focado em transformação (não em número).</li>
+        <li>Vídeo de opinião forte sobre um erro comum do nicho.</li>
+      </ul>
+    </div>
+
+    <div class="bloco">
+      <h3 class="bloco-h"><span class="pill pill-a">A</span> Ação</h3>
+      <p><strong>Propósito.</strong> Chamar pra decisão. Conteúdo que abre porta de oferta, agenda, lista, fechamento.</p>
+      <p>Aqui mora CTA direto, abertura de turma, anúncio de vaga, comunicação de período de matrícula, convite explícito. O critério principal: <em>a pessoa entende imediatamente qual é o próximo passo e qual a janela de tempo</em>.</p>
+      <p><strong>Exemplos do banco:</strong></p>
+      <ul class="exemplos">
+        <li>Reel anunciando abertura de inscrições com link no perfil.</li>
+        <li>Carrossel explicando como funciona a metodologia + CTA pra agenda.</li>
+        <li>Story sequencial avisando que faltam X vagas (sem manipulação artificial).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-h">3. Como misturar os três grupos</h2>
+    <p>A pergunta que mais aparece: <strong>"Quanto de cada eu posto?"</strong>. A regra prática da Queila:</p>
+    <div class="mix-grid">
+      <div class="mix-item">
+        <div class="lbl">D+E</div>
+        <div class="pct">70%</div>
+        <div style="font-size:.78rem;color:var(--cream-700)">A maior parte do que você publica</div>
+      </div>
+      <div class="mix-item">
+        <div class="lbl">C+I+D</div>
+        <div class="pct">30%</div>
+        <div style="font-size:.78rem;color:var(--cream-700)">Fatia consistente, sem exagero</div>
+      </div>
+      <div class="mix-item">
+        <div class="lbl">A</div>
+        <div class="pct">0–10%</div>
+        <div style="font-size:.78rem;color:var(--cream-700)">Quase nada fora de janelas de vendas</div>
+      </div>
+    </div>
+    <div class="callout">
+      Conteúdo que só vende cansa, conteúdo que só ensina não converte, e conteúdo que só conecta não constrói marca. Os três grupos se sustentam mutuamente.
+    </div>
+    <p>Em fase de vendas (turma aberta, agenda com vagas), aumente o A pra 10–20% temporariamente — mas <strong>não derrube</strong> D+E e C+I+D. Continue alimentando os dois enquanto o A puxa decisão.</p>
+  </section>
+
+  <section>
+    <h2 class="section-h">4. Como navegar o banco</h2>
+    <ol>
+      <li><strong>Filtre pela etapa</strong> em <a href="/trilhas">/trilhas</a> usando o seletor "C+I+D / Descoberta / Ação".</li>
+      <li><strong>Clique no card</strong> pra abrir o modal com a referência completa: thumb, transcrição e o <em>Guia de uso</em> editorial.</li>
+      <li><strong>O Guia de uso</strong> mostra três blocos pra cada referência: <em>quando usar</em>, <em>por que funciona</em>, <em>como adaptar</em>. Esses três blocos te dizem como aplicar a referência ao seu próprio contexto.</li>
+      <li><strong>Se a referência ainda não tem Guia de uso</strong>, é porque é um item legado pré-curadoria. A seção fica oculta — sem placeholder vazio.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 class="section-h">5. O que cada campo do Guia de uso significa</h2>
+    <div class="bloco">
+      <h3 class="bloco-h">Quando usar</h3>
+      <p>Em que momento do calendário ou da jornada esse conteúdo serve. Exemplo: <em>"quando a audiência está fria e precisa entender o problema antes da oferta"</em>.</p>
+    </div>
+    <div class="bloco">
+      <h3 class="bloco-h">Por que funciona</h3>
+      <p>Mecânica do conteúdo. Por que esse formato/ângulo conecta. Exemplo: <em>"mistura prova social com vulnerabilidade, criando identificação rápida"</em>.</p>
+    </div>
+    <div class="bloco">
+      <h3 class="bloco-h">Como adaptar</h3>
+      <p>O caminho prático pra trazer a referência pro seu contexto. Exemplo: <em>"trocar o exemplo de fim de ano pelo contexto da clínica em outubro"</em>.</p>
+    </div>
+    <div class="callout">
+      O banco não substitui o seu olhar editorial — ele acelera. A escolha final do tom, do contexto e da entrega é sua.
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-h">6. Erros comuns</h2>
+    <ol>
+      <li><strong>Achar que C+I+D é só "Confiança"</strong>. Não é. São três coisas que andam juntas: confiança (acreditar em você), identificação (se ver no problema) e desejo (querer o resultado). Se faltar uma, o conteúdo dessa categoria não está completo.</li>
+      <li><strong>Postar 80% Ação porque "preciso vender"</strong>. Audiência cansa rápido. Ação puxa decisão de quem já está pronto — não cria pronto.</li>
+      <li><strong>Postar 100% Descoberta porque "viraliza"</strong>. Alcance sem confiança vira número, não cliente. C+I+D no meio converte atenção em desejo.</li>
+      <li><strong>Tratar DECIDA como sequência linear</strong>. Não é. Os três grupos rodam em paralelo no calendário — audiência nova entra pelo D+E hoje, vê seu C+I+D amanhã, decide pelo A na semana que vem.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 class="section-h">7. Para começar</h2>
+    <div class="links-grid">
+      <a href="/trilhas">📂 Abrir /trilhas — banco curado</a>
+      <a href="/posts">📌 Abrir /posts — fixados e destaques</a>
+      <a href="/live">➕ Cadastrar nova referência</a>
+      <a href="/docs/specs/content-system/guia-decida.md" target="_blank" rel="noopener">📖 Guia DECIDA (versão completa)</a>
+    </div>
+  </section>
+
+  <div class="footer">Banco de Referências CASE · Método DECIDA</div>
+</div>
+
+</body></html>

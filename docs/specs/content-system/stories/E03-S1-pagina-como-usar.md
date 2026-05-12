@@ -3,7 +3,7 @@ id: E03-S1
 title: "Criar /como-usar.html"
 type: story
 epic: E03
-status: Draft
+status: Done
 priority: P0
 estimated_effort: M
 date: 2026-05-12

@@ -3,7 +3,7 @@ id: E03-S4
 title: "Adicionar link 'Como usar' na navegação"
 type: story
 epic: E03
-status: Draft
+status: Done
 priority: P0
 estimated_effort: XS
 date: 2026-05-12

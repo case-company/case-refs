@@ -3,7 +3,7 @@ id: E03-S3
 title: "Seção de exemplos práticos na /como-usar"
 type: story
 epic: E03
-status: Draft
+status: Review (exemplos genéricos no /como-usar.html, pendente refinamento com Queila)
 priority: P0
 estimated_effort: M
 date: 2026-05-12
