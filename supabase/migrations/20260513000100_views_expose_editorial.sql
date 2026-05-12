@@ -39,7 +39,7 @@ CREATE OR REPLACE VIEW public.v_referencias_publicas AS
     promoted_at,
     created_at,
     updated_at
-  FROM referencias_conteudo
+  FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL;
 
 COMMENT ON VIEW public.v_referencias_publicas IS
@@ -75,7 +75,7 @@ CREATE OR REPLACE VIEW public.v_referencias_promovidas AS
     como_adaptar,
     tags,
     promoted_at
-  FROM referencias_conteudo
+  FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL AND promoted_at IS NOT NULL
   ORDER BY promoted_at DESC;
 

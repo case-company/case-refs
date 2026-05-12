@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.case_refs_promote_editorial(
 RETURNS TABLE(id INT, promoted_at TIMESTAMPTZ)
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, agente
 AS $$
 DECLARE
   v_missing TEXT[] := ARRAY[]::TEXT[];
@@ -35,7 +35,7 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  UPDATE referencias_conteudo
+  UPDATE agente.referencias_conteudo
      SET quando_usar      = trim(p_quando_usar),
          por_que_funciona = trim(p_por_que_funciona),
          como_adaptar     = trim(p_como_adaptar),
