@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/_auth.js"></script>
+<script src="/_decida.js"></script>
+<title>Agente 00.5 — Download do Expert</title>
+<link rel="stylesheet" href="/_agente-styles.css">
+</head><body>
+
+<div class="back-bar">
+  <a class="back-home" href="/">← Banco de Referências</a>
+  <a class="back-home" href="/agentes">← Agentes</a>
+  <a class="back-home" href="/como-usar">📖 Como usar</a>
+</div>
+
+<div class="container">
+  <div class="eyebrow">Agente 00.5</div>
+  <h1 class="page-title">Download do Expert</h1>
+  <p class="page-subtitle">Repositório de crenças, teses, provas, histórias, método, linguagem e fontes do expert. Cada download referencia opcionalmente um Mapa de Interesse (mapa_id). Sem mapa, o download fica "solto" no banco.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Criar novo download</h2>
+
+      <label>Cliente slug</label>
+      <input id="cliente_slug" type="text" placeholder="ex: jordanna" required>
+
+      <label>Mapa de Interesse (opcional) <span class="hint">(id da tabela mapas_interesse)</span></label>
+      <input id="mapa_id" type="text" placeholder="ex: 7">
+
+      <label>Título</label>
+      <input id="titulo" type="text" placeholder="ex: Download Jordanna — v1 (2026-05)" required>
+
+      <label>Crenças <span class="hint">(JSON array de objetos)</span></label>
+      <textarea id="crencas" placeholder='[{"tese":"...","contexto":"...","prova":"..."}]'></textarea>
+
+      <label>Teses</label>
+      <textarea id="teses" placeholder='[{"tese":"..."},{"tese":"..."}]'></textarea>
+
+      <label>Provas <span class="hint">(cases, métricas, depoimentos)</span></label>
+      <textarea id="provas" placeholder='[{"tipo":"case","texto":"..."}]'></textarea>
+
+      <label>Histórias</label>
+      <textarea id="historias" placeholder='[{"titulo":"...","narrativa":"..."}]'></textarea>
+
+      <label>Método</label>
+      <textarea id="metodo" placeholder='{"pilares":[],"etapas":[],"principios":[]}'></textarea>
+
+      <label>Linguagem <span class="hint">(frases próprias, jargões, bordões)</span></label>
+      <textarea id="linguagem" placeholder='{"frases":[],"jargoes":[],"bordoes":[]}'></textarea>
+
+      <label>Fontes <span class="hint">(entrevistas, áudios, calls — referências)</span></label>
+      <textarea id="fontes" placeholder='[{"tipo":"entrevista","url":"..."}]'></textarea>
+
+      <div class="actions">
+        <button id="btn-save" class="btn btn-primary">Salvar como rascunho</button>
+        <button id="btn-clear" class="btn">Limpar form</button>
+      </div>
+      <div id="save-msg" class="muted" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Downloads existentes <span id="count-badge" class="badge" style="font-size:.65rem">—</span></h2>
+      <label>Filtrar por cliente_slug</label>
+      <input id="filter-slug" type="text" placeholder="ex: jordanna">
+      <div id="list-anchor" style="margin-top:16px"><div class="empty-state">Carregando…</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/_agente-shared.js"></script>
+<script>
+const { callRpc, fetchView, parseJsonField, toast, escapeHtml, fmtDate } = window.AGENTE;
+
+document.getElementById("btn-save").addEventListener("click", onSave);
+document.getElementById("btn-clear").addEventListener("click", clearForm);
+document.getElementById("filter-slug").addEventListener("input", debounce(loadList, 300));
+
+async function onSave() {
+  const btn = document.getElementById("btn-save");
+  const msg = document.getElementById("save-msg");
+  const mapaIdRaw = document.getElementById("mapa_id").value.trim();
+  const args = {
+    p_cliente_slug: document.getElementById("cliente_slug").value.trim(),
+    p_mapa_id:      mapaIdRaw ? parseInt(mapaIdRaw, 10) : null,
+    p_titulo:       document.getElementById("titulo").value.trim(),
+    p_crencas:      parseJsonField(document.getElementById("crencas").value, null),
+    p_teses:        parseJsonField(document.getElementById("teses").value, null),
+    p_provas:       parseJsonField(document.getElementById("provas").value, null),
+    p_historias:    parseJsonField(document.getElementById("historias").value, null),
+    p_metodo:       parseJsonField(document.getElementById("metodo").value, null),
+    p_linguagem:    parseJsonField(document.getElementById("linguagem").value, null),
+    p_fontes:       parseJsonField(document.getElementById("fontes").value, null),
+  };
+  if (!args.p_cliente_slug || !args.p_titulo) {
+    msg.className = "error";
+    msg.textContent = "cliente_slug e título são obrigatórios.";
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Salvando…"; msg.textContent = "";
+  try {
+    const data = await callRpc("case_agente_download_save", args);
+    const row = Array.isArray(data) && data[0] ? data[0] : data;
+    msg.className = "success-msg";
+    msg.textContent = `Salvo — id ${row.out_id}, versão ${row.out_versao}.`;
+    toast("Download salvo ✓");
+    await loadList();
+  } catch (e) {
+    msg.className = "error";
+    msg.textContent = "Erro: " + e.message;
+    toast("Erro: " + e.message, "err");
+  } finally {
+    btn.disabled = false; btn.textContent = "Salvar como rascunho";
+  }
+}
+
+function clearForm() {
+  ["cliente_slug","mapa_id","titulo","crencas","teses","provas","historias","metodo","linguagem","fontes"]
+    .forEach(id => document.getElementById(id).value = "");
+  document.getElementById("save-msg").textContent = "";
+}
+
+async function loadList() {
+  const anchor = document.getElementById("list-anchor");
+  const slug = document.getElementById("filter-slug").value.trim();
+  const filter = slug ? `cliente_slug=eq.${encodeURIComponent(slug)}&` : "";
+  anchor.innerHTML = '<div class="empty-state">Carregando…</div>';
+  try {
+    const rows = await fetchView("v_downloads_expert", `${filter}order=created_at.desc&limit=50`);
+    document.getElementById("count-badge").textContent = rows.length;
+    if (!rows.length) {
+      anchor.innerHTML = '<div class="empty-state">Nenhum download encontrado.</div>';
+      return;
+    }
+    let h = '<table class="records"><thead><tr><th>id</th><th>cliente</th><th>v</th><th>mapa</th><th>título</th><th>status</th><th>criado</th></tr></thead><tbody>';
+    for (const r of rows) {
+      h += `<tr>
+        <td>${r.id}</td>
+        <td><strong>${escapeHtml(r.cliente_slug)}</strong></td>
+        <td>${r.versao}</td>
+        <td>${r.mapa_id || '—'}</td>
+        <td>${escapeHtml(r.titulo)}
+          <details><summary>blocos</summary><pre>${escapeHtml(JSON.stringify({crencas:r.crencas,teses:r.teses,provas:r.provas,historias:r.historias,metodo:r.metodo,linguagem:r.linguagem,fontes:r.fontes}, null, 2))}</pre></details>
+        </td>
+        <td><span class="badge badge-${r.status}">${r.status}</span></td>
+        <td>${fmtDate(r.created_at)}</td>
+      </tr>`;
+    }
+    h += '</tbody></table>';
+    anchor.innerHTML = h;
+  } catch (e) {
+    anchor.innerHTML = `<div class="error">Erro: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+loadList();
+</script>
+</body></html>
