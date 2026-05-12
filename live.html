@@ -202,6 +202,7 @@ function render(){
   const q = document.getElementById('q').value.trim().toLowerCase();
   const cutoff = periodoCutoff(periodo);
   let rows = DATA.filter(r => {
+    if (r.promoted_at) return false;  // promovidos saem do /live, vão pro /trilhas
     if (tipo && r.tipo_artefato !== tipo) return false;
     if (trilha && r.trilha !== trilha) return false;
     if (etapa && r.etapa_funil !== etapa) return false;
@@ -246,6 +247,7 @@ function render(){
           <span style="display:flex;gap:var(--sp-1)">
             ${novo?'<span class="badge" style="background:var(--accent-500);color:white">NOVO</span>':''}
             ${r.posicao?`<span class="badge badge-cream">Pos ${r.posicao}</span>`:''}
+            <span class="badge" style="background:var(--warning);color:white" title="Aguardando curadoria pra ir pro Banco de Trilhas">⏳ pendente</span>
           </span>
         </div>
         ${thumb&&isVideo?'<div class="play">▶</div>':''}
@@ -319,9 +321,12 @@ function openModal(id){
     </h4>
     <div id="notesView" style="font-size:var(--text-sm);color:var(--cream-700);white-space:pre-wrap;min-height:1.4em">${escapeHtml(r.notas||'(sem notas)')}</div>
   </div>`;
-  body += `<div class="modal-section" style="display:flex;justify-content:space-between;gap:var(--sp-2);border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
-    <button class="btn" onclick="shareCard(${r.id})">🔗 Compartilhar link</button>
-    <button class="btn-danger" onclick="deleteRef()">🗑️ Excluir referência</button>
+  body += `<div class="modal-section" style="display:flex;flex-direction:column;gap:var(--sp-2);border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
+    <button class="btn btn-primary" id="btnPromote" onclick="promoteRef()" style="width:100%;justify-content:center;font-size:var(--text-md);padding:var(--sp-3) var(--sp-4)">✨ Promover ao Banco de Trilhas</button>
+    <div style="display:flex;justify-content:space-between;gap:var(--sp-2)">
+      <button class="btn" onclick="shareCard(${r.id})">🔗 Compartilhar link</button>
+      <button class="btn-danger" onclick="deleteRef()">🗑️ Excluir referência</button>
+    </div>
   </div>`;
   document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modal').classList.add('open');
@@ -369,6 +374,28 @@ async function saveNotes() {
   } catch (e) {
     btn.disabled = false; btn.textContent = 'Salvar';
     showToast('Erro: ' + e.message);
+  }
+}
+
+async function promoteRef() {
+  const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
+  const btn = document.getElementById('btnPromote');
+  btn.disabled = true; btn.textContent = 'Promovendo...';
+  try {
+    const res = await fetch(MUTATE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
+      body: JSON.stringify({ op: 'promote', id: CURRENT_REF_ID })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // remove do DATA local pra sumir do /live imediatamente
+    DATA = DATA.filter(x => x.id !== CURRENT_REF_ID);
+    closeModal();
+    showToast('✨ Promovido ao Banco de Trilhas — abra /trilhas pra ver');
+    render();
+  } catch (e) {
+    btn.disabled = false; btn.textContent = '✨ Promover ao Banco de Trilhas';
+    showToast('Erro ao promover: ' + e.message);
   }
 }
 

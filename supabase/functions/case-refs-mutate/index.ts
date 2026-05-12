@@ -3,6 +3,8 @@
 //   { op: 'update_note', id: number, notas: string }
 //   { op: 'update_tags', id: number, tags: string[] }
 //   { op: 'soft_delete', id: number }
+//   { op: 'promote', id: number }      -- promove de /live pro /trilhas
+//   { op: 'unpromote', id: number }    -- volta pro /live
 // Delega pra RPC functions no schema public (SECURITY DEFINER) que escrevem em agente.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -67,6 +69,18 @@ Deno.serve(async (req) => {
 
   if (op === "soft_delete") {
     const r = await callRpc("case_refs_soft_delete", { p_id: id });
+    if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
+    return jsonResponse({ ok: true, op, ...r.data });
+  }
+
+  if (op === "promote") {
+    const r = await callRpc("case_refs_promote", { p_id: id });
+    if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
+    return jsonResponse({ ok: true, op, ...r.data });
+  }
+
+  if (op === "unpromote") {
+    const r = await callRpc("case_refs_unpromote", { p_id: id });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
     return jsonResponse({ ok: true, op, ...r.data });
   }
