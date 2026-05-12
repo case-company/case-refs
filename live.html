@@ -332,8 +332,27 @@ function openModal(id){
     </h4>
     <div id="notesView" style="font-size:var(--text-sm);color:var(--cream-700);white-space:pre-wrap;min-height:1.4em">${escapeHtml(r.notas||'(sem notas)')}</div>
   </div>`;
-  body += `<div class="modal-section" style="display:flex;flex-direction:column;gap:var(--sp-2);border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
-    <button class="btn btn-primary" id="btnPromote" onclick="promoteRef()" style="width:100%;justify-content:center;font-size:var(--text-md);padding:var(--sp-3) var(--sp-4)">✨ Promover ao Banco de Trilhas</button>
+  body += `<div class="modal-section" id="editorialSection" style="border-top:1px solid var(--neutral-200);padding-top:var(--sp-3);margin-top:var(--sp-4)">
+    <h4 style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2)">
+      <span>Guia de uso (obrigatório para promover)</span>
+      <a href="/docs/specs/content-system/guia-decida.md" target="_blank" rel="noopener" class="btn-mini" style="text-decoration:none">📖 Guia DECIDA</a>
+    </h4>
+    <div style="font-size:var(--text-xs);color:var(--cream-700);margin-bottom:var(--sp-3)">Preencha os 3 campos abaixo (mínimo 20 caracteres cada) para promover esta referência ao banco /trilhas.</div>
+
+    <label style="display:block;font-size:var(--text-xs);font-weight:600;color:var(--brand-700);margin-bottom:var(--sp-1)">Quando usar</label>
+    <textarea id="ed_quando_usar" placeholder="Ex.: em momentos do calendário em que a audiência está fria e precisa entender o problema antes da oferta." style="width:100%;min-height:64px;padding:var(--sp-2);border:1px solid var(--neutral-200);border-radius:var(--radius-md);font-family:var(--font-ui);font-size:var(--text-sm);resize:vertical;margin-bottom:var(--sp-3)"></textarea>
+
+    <label style="display:block;font-size:var(--text-xs);font-weight:600;color:var(--brand-700);margin-bottom:var(--sp-1)">Por que funciona</label>
+    <textarea id="ed_por_que_funciona" placeholder="Ex.: mistura prova social com vulnerabilidade, criando identificação rápida com o leitor." style="width:100%;min-height:64px;padding:var(--sp-2);border:1px solid var(--neutral-200);border-radius:var(--radius-md);font-family:var(--font-ui);font-size:var(--text-sm);resize:vertical;margin-bottom:var(--sp-3)"></textarea>
+
+    <label style="display:block;font-size:var(--text-xs);font-weight:600;color:var(--brand-700);margin-bottom:var(--sp-1)">Como adaptar</label>
+    <textarea id="ed_como_adaptar" placeholder="Ex.: trocar o exemplo do gatilho 'fim de ano' por contexto da mentorada (ex.: agenda da clínica em outubro)." style="width:100%;min-height:64px;padding:var(--sp-2);border:1px solid var(--neutral-200);border-radius:var(--radius-md);font-family:var(--font-ui);font-size:var(--text-sm);resize:vertical;margin-bottom:var(--sp-3)"></textarea>
+
+    <div id="ed_status" role="alert" style="font-size:var(--text-xs);color:var(--cream-700);margin-bottom:var(--sp-2);min-height:1.2em">0 / 3 campos com >= 20 caracteres</div>
+  </div>`;
+
+  body += `<div class="modal-section" style="display:flex;flex-direction:column;gap:var(--sp-2)">
+    <button class="btn btn-primary" id="btnPromote" disabled onclick="promoteRef()" style="width:100%;justify-content:center;font-size:var(--text-md);padding:var(--sp-3) var(--sp-4);opacity:.5;cursor:not-allowed">✨ Promover ao Banco de Trilhas</button>
     <div style="display:flex;justify-content:space-between;gap:var(--sp-2)">
       <button class="btn" onclick="shareCard(${r.id})">🔗 Compartilhar link</button>
       <button class="btn-danger" onclick="deleteRef()">🗑️ Excluir referência</button>
@@ -341,6 +360,26 @@ function openModal(id){
   </div>`;
   document.getElementById('modalBody').innerHTML = body;
   document.getElementById('modal').classList.add('open');
+  attachEditorialValidator();
+}
+
+// Habilita/desabilita o botao Promover conforme as 3 textareas atingem >= 20 chars.
+function attachEditorialValidator() {
+  const ids = ['ed_quando_usar', 'ed_por_que_funciona', 'ed_como_adaptar'];
+  const btn = document.getElementById('btnPromote');
+  const status = document.getElementById('ed_status');
+  if (!btn || !status) return;
+  const fields = ids.map(id => document.getElementById(id)).filter(Boolean);
+  function recompute() {
+    const ok = fields.filter(el => el.value.trim().length >= 20).length;
+    status.textContent = `${ok} / 3 campos com >= 20 caracteres`;
+    const allOk = ok === 3;
+    btn.disabled = !allOk;
+    btn.style.opacity = allOk ? '1' : '.5';
+    btn.style.cursor = allOk ? 'pointer' : 'not-allowed';
+  }
+  fields.forEach(el => el.addEventListener('input', recompute));
+  recompute();
 }
 
 function editNotes() {
@@ -391,13 +430,39 @@ async function saveNotes() {
 async function promoteRef() {
   const r = DATA.find(x=>x.id===CURRENT_REF_ID); if(!r) return;
   const btn = document.getElementById('btnPromote');
+  const status = document.getElementById('ed_status');
+  const quando_usar      = (document.getElementById('ed_quando_usar')?.value || '').trim();
+  const por_que_funciona = (document.getElementById('ed_por_que_funciona')?.value || '').trim();
+  const como_adaptar     = (document.getElementById('ed_como_adaptar')?.value || '').trim();
+
+  // Defesa cliente — o servidor tambem barra (Edge Fn + CHECK constraint).
+  const missing = [];
+  if (quando_usar.length < 20)      missing.push('quando_usar');
+  if (por_que_funciona.length < 20) missing.push('por_que_funciona');
+  if (como_adaptar.length < 20)     missing.push('como_adaptar');
+  if (missing.length > 0) {
+    if (status) status.textContent = 'Faltando: ' + missing.join(', ');
+    return;
+  }
+
   btn.disabled = true; btn.textContent = 'Promovendo...';
   try {
     const res = await fetch(MUTATE_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON },
-      body: JSON.stringify({ op: 'promote', id: CURRENT_REF_ID })
+      body: JSON.stringify({
+        op: 'promote_editorial',
+        id: CURRENT_REF_ID,
+        quando_usar, por_que_funciona, como_adaptar,
+      })
     });
+    if (res.status === 422) {
+      const j = await res.json().catch(() => ({}));
+      const fields = Array.isArray(j.fields) ? j.fields.join(', ') : (j.error || 'campos invalidos');
+      if (status) status.textContent = 'Servidor recusou: ' + fields;
+      btn.disabled = false; btn.textContent = '✨ Promover ao Banco de Trilhas';
+      return;
+    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     // remove do DATA local pra sumir do /live imediatamente
     DATA = DATA.filter(x => x.id !== CURRENT_REF_ID);

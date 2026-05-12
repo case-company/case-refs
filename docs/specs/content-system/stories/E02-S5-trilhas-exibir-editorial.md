@@ -3,7 +3,7 @@ id: E02-S5
 title: "/trilhas: exibir campos editoriais no card expandido"
 type: story
 epic: E02
-status: Draft
+status: Review (front pronto, depende de E02-S3 aplicada em prod)
 priority: P0
 estimated_effort: S
 date: 2026-05-12

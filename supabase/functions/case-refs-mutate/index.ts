@@ -3,8 +3,11 @@
 //   { op: 'update_note', id: number, notas: string }
 //   { op: 'update_tags', id: number, tags: string[] }
 //   { op: 'soft_delete', id: number }
-//   { op: 'promote', id: number }      -- promove de /live pro /trilhas
-//   { op: 'unpromote', id: number }    -- volta pro /live
+//   { op: 'promote', id: number }                       -- legacy, sem campos editoriais (DEPRECATED apos E02)
+//   { op: 'promote_editorial', id: number,
+//     quando_usar: string, por_que_funciona: string,
+//     como_adaptar: string, objetivo?: string }         -- novo fluxo E02 com 3 campos obrigatorios
+//   { op: 'unpromote', id: number }                     -- volta pro /live
 // Delega pra RPC functions no schema public (SECURITY DEFINER) que escrevem em agente.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -76,6 +79,39 @@ Deno.serve(async (req) => {
   if (op === "promote") {
     const r = await callRpc("case_refs_promote", { p_id: id });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
+    return jsonResponse({ ok: true, op, ...r.data });
+  }
+
+  if (op === "promote_editorial") {
+    const quando_usar      = typeof body.quando_usar === "string" ? body.quando_usar.trim() : "";
+    const por_que_funciona = typeof body.por_que_funciona === "string" ? body.por_que_funciona.trim() : "";
+    const como_adaptar     = typeof body.como_adaptar === "string" ? body.como_adaptar.trim() : "";
+    const objetivo         = typeof body.objetivo === "string" ? body.objetivo.trim() : "";
+
+    const missing: string[] = [];
+    if (quando_usar.length < 20)      missing.push("quando_usar");
+    if (por_que_funciona.length < 20) missing.push("por_que_funciona");
+    if (como_adaptar.length < 20)     missing.push("como_adaptar");
+
+    if (missing.length > 0) {
+      return jsonResponse(
+        { ok: false, error: "missing_editorial_fields", fields: missing },
+        422,
+      );
+    }
+
+    const r = await callRpc("case_refs_promote_editorial", {
+      p_id: id,
+      p_quando_usar: quando_usar,
+      p_por_que_funciona: por_que_funciona,
+      p_como_adaptar: como_adaptar,
+      p_objetivo: objetivo || null,
+    });
+    if (!r.ok) {
+      // Postgres RAISE EXCEPTION com missing_editorial_fields => devolve 422
+      const isFieldsErr = typeof r.error === "string" && r.error.includes("missing_editorial_fields");
+      return jsonResponse({ ok: false, error: r.error }, isFieldsErr ? 422 : 500);
+    }
     return jsonResponse({ ok: true, op, ...r.data });
   }
 

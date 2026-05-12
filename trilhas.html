@@ -381,6 +381,10 @@ function adaptPromoted(r) {
     perfil_origem: r.perfil || '',
     timestamp: r.created_at,
     thumb_local: '',
+    quando_usar: r.quando_usar || '',
+    por_que_funciona: r.por_que_funciona || '',
+    como_adaptar: r.como_adaptar || '',
+    objetivo: r.objetivo || '',
     _promoted_id: r.id,
     _is_promoted: true
   };
@@ -512,17 +516,34 @@ async function openModal(shortcode, trilha, etapa, tipo, formato, angulo, perfil
   const m = document.getElementById('modal');
   document.getElementById('modalTitle').textContent = `${angulo || formato}`;
   document.getElementById('modalPlayer').innerHTML = `<iframe src="https://www.instagram.com/p/${shortcode}/embed/captioned/" allow="encrypted-media" scrolling="no"></iframe>`;
+  // Localiza o registro completo no DATA para acessar campos editoriais
+  // (preenchidos via E02 — opcionais em itens legados).
+  const full = DATA.find(d => d.shortcode === shortcode) || {};
+  const etapaLabel = (window.decidaLabel && window.decidaLabel(etapa)) || etapa;
+  const etapaTitle = (window.decidaLabelLong && window.decidaLabelLong(etapa)) || '';
   let body = `<div class="modal-meta">
     <span class="badge badge-cream">${trilha}</span>
-    <span class="badge badge-brand">${etapa}</span>
+    <span class="badge badge-brand" title="${etapaTitle}">${etapaLabel}</span>
     <span class="badge badge-cream">${escapeHtml(formato)}</span>
     ${perfil ? `<span class="badge badge-neutral">@${escapeHtml(perfil)}</span>` : ''}
   </div>
   <div class="modal-section">
     <h4>Categoria</h4>
     <div>${escapeHtml(tipo)}</div>
-  </div>
-  <div class="modal-section">
+  </div>`;
+  // Guia de uso (3 campos editoriais — so renderiza se houver algum)
+  const qu = (full.quando_usar || '').trim();
+  const pf = (full.por_que_funciona || '').trim();
+  const ca = (full.como_adaptar || '').trim();
+  if (qu || pf || ca) {
+    body += `<div class="modal-section">
+      <h4>Guia de uso</h4>
+      ${qu ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Quando usar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(qu)}</span></div>` : ''}
+      ${pf ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Por que funciona.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(pf)}</span></div>` : ''}
+      ${ca ? `<div><strong style="font-size:var(--text-xs);color:var(--brand-700)">Como adaptar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(ca)}</span></div>` : ''}
+    </div>`;
+  }
+  body += `<div class="modal-section">
     <h4>Transcrição</h4>
     <div id="transcriptBox" class="modal-transcript transcript-empty">carregando...</div>
   </div>`;
