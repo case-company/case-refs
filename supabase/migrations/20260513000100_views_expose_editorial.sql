@@ -37,8 +37,7 @@ CREATE OR REPLACE VIEW public.v_referencias_publicas AS
     como_adaptar,
     tags,
     promoted_at,
-    created_at,
-    updated_at
+    created_at
   FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL;
 

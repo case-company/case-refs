@@ -164,7 +164,7 @@ CREATE OR REPLACE VIEW public.v_referencias_publicas AS
     transcricao, language_code, audio_duration_ms,
     tipo_estrategico, etapa_funil, objetivo,
     quando_usar, por_que_funciona, como_adaptar,
-    tags, promoted_at, created_at, updated_at
+    tags, promoted_at, created_at
   FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL;
 
