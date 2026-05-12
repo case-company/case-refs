@@ -2,6 +2,7 @@
 <html lang="pt-BR"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="/_auth.js"></script>
+<script src="/_decida.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <title>Banco Live — Cadastros via Form</title>
 <style>
@@ -109,7 +110,7 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
   <div class="toolbar">
     <input type="search" class="input input-search" id="q" placeholder="Buscar perfil, caption, transcrição...">
     <select class="select" id="trilha"><option value="">Todas trilhas</option><option value="clinic">Clínica</option><option value="scale">Mentoria</option></select>
-    <select class="select" id="etapa"><option value="">Todas etapas</option><option value="DESCOBERTA">Descoberta</option><option value="CONFIANCA">Confiança</option><option value="ACAO">Ação</option></select>
+    <select class="select" id="etapa"><option value="">Todas etapas</option><option value="DESCOBERTA" title="Descoberta · Engajamento (70%)">Descoberta</option><option value="CONFIANCA" title="Confiança · Identificação · Desejo (30%)">C+I+D</option><option value="ACAO" title="Ação · Decisão (10%)">Ação</option></select>
     <select class="select" id="periodo"><option value="">Qualquer data</option><option value="1h">Última hora</option><option value="24h">Últimas 24h</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="custom">Personalizado…</option></select>
     <input type="date" class="input" id="dateFrom" style="display:none;max-width:140px">
     <input type="date" class="input" id="dateTo" style="display:none;max-width:140px">
@@ -144,7 +145,17 @@ const SUPABASE_URL = "https://knusqfbvhsqworzyhvip.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo";
 
 const TIPO_BADGE = {'Apresentação':'badge-brand','Prova Social':'badge-success','Oferta/CTA':'badge-accent','Quem Sou':'badge-brand','Resultados':'badge-success','Metodologia/Produto':'badge-info','FAQ':'badge-warning','Dicas Grátis':'badge-cream','Mentoria/Produto/Oferta':'badge-accent','Bastidores':'badge-neutral','Específico do Nicho':'badge-neutral','Indefinido':'badge-neutral'};
-const ETAPA_LABEL = {DESCOBERTA:'Descoberta',CONFIANCA:'Confiança',ACAO:'Ação'};
+// Labels via /_decida.js (window.DECIDA_MAP) — ADR 0001. Fallback retro-compat.
+const ETAPA_LABEL = {
+  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label) || 'Descoberta',
+  CONFIANCA: (window.DECIDA_MAP && window.DECIDA_MAP.CONFIANCA.label) || 'C+I+D',
+  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label) || 'Ação',
+};
+const ETAPA_LABEL_LONG = {
+  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label_long) || 'Descoberta · Engajamento',
+  CONFIANCA: (window.DECIDA_MAP && window.DECIDA_MAP.CONFIANCA.label_long) || 'Confiança · Identificação · Desejo',
+  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label_long) || 'Ação · Decisão',
+};
 
 let DATA = [];
 function escapeHtml(s){return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -265,7 +276,7 @@ function render(){
         ${tags.length?`<div style="display:flex;gap:4px;flex-wrap:wrap">${tags.map(t=>`<span class="tag-chip">${escapeHtml(t)}</span>`).join('')}</div>`:''}
         <div class="card-foot">
           <span>${[fmtNum(r.likes)?'♥ '+fmtNum(r.likes):'',fmtNum(r.comments)?'💬 '+fmtNum(r.comments):'',fmtNum(r.views)?'▶ '+fmtNum(r.views):''].filter(x=>x).join(' · ')}</span>
-          <span class="badge badge-cream">${ETAPA_LABEL[r.etapa_funil]||'—'}</span>
+          <span class="badge badge-cream" title="${ETAPA_LABEL_LONG[r.etapa_funil]||''}">${ETAPA_LABEL[r.etapa_funil]||'—'}</span>
         </div>
       </div>
     </div>`;
@@ -303,7 +314,7 @@ function openModal(id){
   let body = `<div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-3)">
     <span class="badge badge-cream">${r.trilha}</span>
     <span class="badge ${TIPO_BADGE[r.tipo_estrategico]||'badge-neutral'}">${escapeHtml(r.tipo_estrategico||'—')}</span>
-    <span class="badge badge-brand">${ETAPA_LABEL[r.etapa_funil]||'—'}</span>
+    <span class="badge badge-brand" title="${ETAPA_LABEL_LONG[r.etapa_funil]||''}">${ETAPA_LABEL[r.etapa_funil]||'—'}</span>
     ${r.tem_transcricao?'<span class="badge badge-success">Transcrita</span>':''}
   </div>`;
   if (r.caption) body += `<div class="modal-section"><h4>Caption</h4><div style="font-size:var(--text-sm);white-space:pre-wrap">${escapeHtml(r.caption)}</div></div>`;

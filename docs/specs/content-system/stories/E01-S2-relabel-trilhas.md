@@ -3,7 +3,7 @@ id: E01-S2
 title: "Relabel etapa_funil em /trilhas"
 type: story
 epic: E01
-status: Draft
+status: Done
 priority: P0
 estimated_effort: S
 date: 2026-05-12

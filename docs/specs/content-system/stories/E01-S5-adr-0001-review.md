@@ -3,7 +3,7 @@ id: E01-S5
 title: "Review e aprovação do ADR 0001 DECIDA"
 type: story
 epic: E01
-status: Draft
+status: Done
 priority: P0
 estimated_effort: XS
 date: 2026-05-12

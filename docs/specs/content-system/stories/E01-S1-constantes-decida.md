@@ -3,7 +3,7 @@ id: E01-S1
 title: "Criar constante DECIDA no front"
 type: story
 epic: E01
-status: Draft
+status: Done
 priority: P0
 estimated_effort: S
 date: 2026-05-12

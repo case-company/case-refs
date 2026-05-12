@@ -55,6 +55,12 @@ Concretamente:
 - **Backwards compat**: scripts/n8n/Edge Fn antigos que escrevem `etapa_funil = 'CONFIANCA'` continuam funcionando.
 - **UX consistente**: pill colorida + tooltip explicando o bloco em todo card de `/trilhas` e `/posts`.
 
+### Práticas obrigatórias (consequências operacionais)
+
+- **Toda página HTML nova** que precise exibir etapa **DEVE** importar `/_decida.js` via `<script src="/_decida.js"></script>` (ou re-exportar pelo mesmo padrão). Ler labels só de `window.DECIDA_MAP` / `window.decidaLabel(...)`. **Proibido** hardcoded de "Confiança" / "Descoberta" / "Ação" como string literal de label.
+- **Toda query SQL** continua filtrando pelos valores enum do banco (`'CONFIANCA'` etc.). A camada de label é só de apresentação.
+- **Lint guard**: `grep -n '"Confiança"\|>Confiança<\|>CONFIANÇA<' *.html` deve retornar vazio. Repetir o grep antes de marcar PR/story como Done.
+
 ### Negativas / Trade-offs
 
 - **Vazamento conceitual**: quem ler SQL bruto vai ver `CONFIANCA` no banco mas `C+I+D` no front. Mitigado por COMMENT na coluna + view `v_etapa_label`.
@@ -84,6 +90,9 @@ Concretamente:
 
 ## Implementation Hooks
 
-- Migration: `20260513007000_rename_etapa_funil_label_view.sql` cria `v_etapa_label`.
-- Frontend: `/_components/decida-pill.js` renderiza pill com cor + tooltip.
-- Doc: `/como-usar.html` (a ser criado em E01).
+- **Frontend (E01-S1 a S3, já implementado em 2026-05-12)**:
+  - `/_decida.js` exporta `window.DECIDA_MAP`, `window.DECIDA_ORDER`, `window.decidaLabel(...)`, `window.decidaLabelLong(...)`, `window.decidaBadge(...)` — script global, padrão `_auth.js`.
+  - `/_decida.js` linkado em `trilhas.html`, `live.html`, `dashboard.html` via `<script src="/_decida.js"></script>` logo após `_auth.js`.
+  - Filtros `<select>` e badges renderizam `label` (curto: "C+I+D"); `title` HTML carrega `label_long` ("Confiança · Identificação · Desejo (30%)") como tooltip.
+- **Doc cliente-facing**: `guia-decida.md` (E01-S4) + página `/como-usar.html` (E03-S1) explicam o método.
+- **View SQL `v_etapa_label`**: opcional, fora do escopo desta fase — pode entrar em uma fase futura se BI externo passar a consumir. Hoje todo consumo é via front que já tem o mapping.
