@@ -36,11 +36,11 @@ Documentação consolidada do projeto que assume o handoff do Felipe Gobbi e abs
 | [E01](epics/E01-foundations-decida.md) | P0 | em implementação | 5 |
 | [E02](epics/E02-curadoria-editorial.md) | P0 | not-started | 6 |
 | [E03](epics/E03-onboarding-cliente.md) | P0 | not-started | 4 |
-| [E04](epics/E04-agente-mapa-interesse.md) | P1 | not-started | — |
-| [E05](epics/E05-agente-download-expert.md) | P1 | not-started | — |
-| [E06](epics/E06-agente-estrategista.md) | P1 | not-started | — |
-| [E07](epics/E07-agente-modelador.md) | P2 | not-started | — |
-| [E08](epics/E08-validacao-e-rollout.md) | P0 | not-started | — |
+| [E04](epics/E04-agente-mapa-interesse.md) | P1 | code-complete | 1 |
+| [E05](epics/E05-agente-download-expert.md) | P1 | code-complete | 1 |
+| [E06](epics/E06-agente-estrategista.md) | P1 | code-complete | 1 |
+| [E07](epics/E07-agente-modelador.md) | P2 | code-complete | 1 |
+| [E08](epics/E08-validacao-e-rollout.md) | P0 | in-progress | 1 |
 
 ## Stories
 
