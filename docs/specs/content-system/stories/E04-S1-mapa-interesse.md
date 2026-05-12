@@ -48,4 +48,5 @@ owner: Kaique Rodrigues
 
 - [x] AC 1-5 verificados
 - [x] Frontend em prod (Vercel deploy automático)
-- [ ] Backend em prod (pendente `supabase db push` Kaique)
+- [x] Backend em prod (SQL aplicado via Dashboard 2026-05-12)
+- [x] Smoke E2E PASS (curl → 200 + view retorna 1 row)

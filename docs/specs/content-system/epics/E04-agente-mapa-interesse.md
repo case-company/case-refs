@@ -1,7 +1,7 @@
 ---
 title: "E04 — Agente 00: Mapa de Interesse"
 type: epic
-status: not-started
+status: Done (1/1 story, smoke PASS 2026-05-12)
 priority: P1
 depends_on: [E01, E02]
 estimated_stories: 6

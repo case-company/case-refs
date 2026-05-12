@@ -1,7 +1,7 @@
 ---
 title: "E07 — Agente 02: Modelador de Referências"
 type: epic
-status: not-started
+status: Done (1/1 story, smoke PASS 2026-05-12)
 priority: P2
 depends_on: [E02, E06]
 estimated_stories: 5

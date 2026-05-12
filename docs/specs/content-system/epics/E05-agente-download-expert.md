@@ -1,7 +1,7 @@
 ---
 title: "E05 — Agente 00.5: Download do Expert"
 type: epic
-status: not-started
+status: Done (1/1 story, smoke PASS 2026-05-12)
 priority: P1
 depends_on: [E04]
 estimated_stories: 5

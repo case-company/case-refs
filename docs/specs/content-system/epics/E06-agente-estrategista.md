@@ -1,7 +1,7 @@
 ---
 title: "E06 — Agente 01: Estrategista de Conteúdo Editorial"
 type: epic
-status: not-started
+status: Done (1/1 story, smoke PASS 2026-05-12)
 priority: P2
 depends_on: [E04, E05, E08]
 estimated_stories: 6

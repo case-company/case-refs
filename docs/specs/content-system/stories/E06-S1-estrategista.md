@@ -42,4 +42,5 @@ depends_on: [E04-S1, E05-S1]
 ## Definition of Done
 
 - [x] Frontend em prod
-- [ ] Backend em prod (pendente Kaique aplicar SQL)
+- [x] Backend em prod (SQL aplicado 2026-05-12)
+- [x] Smoke E2E PASS (banco_ideias=2 → valido=true; banco_ideias=[] → valido=false confirmado)

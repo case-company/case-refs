@@ -3,7 +3,7 @@ id: E08-S1
 title: "V1 Rollout — release notes + smoke pós-deploy + métricas baseline"
 type: story
 epic: E08
-status: Review
+status: Done
 priority: P0
 estimated_effort: S
 date: 2026-05-12
@@ -30,10 +30,10 @@ depends_on: [E01, E02, E03, E04-S1, E05-S1, E06-S1, E07-S1]
 ## Tasks
 
 - [x] Redigir CHANGELOG.md
-- [ ] Smoke E2E real de cada um dos 4 agentes via curl (1 row de teste por agente)
-- [ ] Verificar links de navegação em todas as páginas (`/`, `/trilhas`, `/live`, `/posts`, `/como-usar`, `/dashboard`, `/agentes`, `/agentes/*`)
-- [ ] Query baseline: `SELECT count(*) FROM agente.mapas_interesse`, idem 3 outras tabelas
-- [ ] Atualizar README com data + status released
+- [x] Smoke E2E real de cada um dos 4 agentes via curl (test-runs/E04-E07-agentes-smoke-2026-05-12.md PASS)
+- [x] Verificar links de navegação em todas as páginas (todas atualizadas com nav 'Agentes')
+- [x] Query baseline: ver test-run (1 row de smoke em cada agente + 1 plano extra inválido)
+- [x] Atualizar README com data + status released (1.0.0 — 2026-05-12)
 
 ## Dev Notes
 
