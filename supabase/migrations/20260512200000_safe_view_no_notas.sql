@@ -1,10 +1,11 @@
--- Safe-view: substitui SELECT * por whitelist explicita em
--- v_referencias_publicas, excluindo `notas` (campo interno do curador).
+-- Safe-view: remove `notas` (campo interno do curador) de
+-- public.v_referencias_publicas — mantem mesma estrutura derivada
+-- (resumo = COALESCE(titulo, left(caption,80)), thumb_url = COALESCE(...))
+-- + mesma ordenacao da view atual.
 --
--- Por que DROP + CREATE em vez de CREATE OR REPLACE:
---   o SELECT * anterior gerou a view com ordem fixa de colunas que
---   inclui `notas` no meio. CREATE OR REPLACE exige preservar nome+ordem
---   das colunas; pra remover `notas` do meio precisamos recriar a view.
+-- DROP + CREATE porque a remocao de `notas` (que esta no meio da
+-- ordenacao atual) muda a posicao das colunas, e CREATE OR REPLACE
+-- nao aceita reordenacao.
 
 DROP VIEW IF EXISTS public.v_referencias_publicas;
 
@@ -15,10 +16,10 @@ CREATE VIEW public.v_referencias_publicas AS
     trilha,
     tipo_artefato,
     posicao,
-    resumo,
+    COALESCE(titulo, "left"(caption, 80)) AS resumo,
     tipo_estrategico,
     etapa_funil,
-    thumb_url,
+    COALESCE(cover_url, display_url)      AS thumb_url,
     url,
     shortcode,
     highlight_id,
@@ -26,7 +27,7 @@ CREATE VIEW public.v_referencias_publicas AS
     likes,
     comments,
     views,
-    tem_transcricao,
+    CASE WHEN (transcricao IS NOT NULL AND length(transcricao) > 0) THEN true ELSE false END AS tem_transcricao,
     transcricao,
     language_code,
     audio_duration_ms,
@@ -35,9 +36,10 @@ CREATE VIEW public.v_referencias_publicas AS
     created_at,
     promoted_at
   FROM agente.referencias_conteudo
-  WHERE deleted_at IS NULL;
+  WHERE deleted_at IS NULL
+  ORDER BY created_at DESC;
 
 COMMENT ON VIEW public.v_referencias_publicas IS
-  'View publica do banco de referencias. Whitelist explicita de colunas — `notas` (campo interno do curador) FICA DE FORA por design. Antes de adicionar coluna nova aqui, conferir se ela pode ser exposta ao anon.';
+  'View publica do banco de referencias. Whitelist explicita — `notas` (campo interno do curador) FICA DE FORA por design. resumo e thumb_url sao colunas derivadas via COALESCE. Antes de adicionar coluna nova aqui, conferir se ela pode ser exposta ao anon.';
 
 GRANT SELECT ON public.v_referencias_publicas TO anon, authenticated;
