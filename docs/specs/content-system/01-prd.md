@@ -23,7 +23,7 @@ Transformar o `refs.casein.com.br` no **sistema editorial canônico da CASE** �
 
 ### Missão (V1)
 
-Consolidar o handoff do projeto paralelo de "Sistema/Central de Conteúdo CASE" no `refs.casein.com.br`, incorporar os 4 agentes editoriais já validados pela Queila (Mapa de Interesse, Download do Expert, Estrategista, Modelador) e entregar uma experiência de uso que sirva tanto ao curador interno quanto ao cliente CASE final.
+Consolidar o handoff do projeto paralelo de "Sistema/Central de Conteúdo CASE" no `refs.casein.com.br`, adotar a taxonomia DECIDA da Queila como vocabulário oficial e entregar uma experiência de uso que sirva tanto ao curador interno quanto ao cliente CASE final.
 
 ---
 
@@ -47,12 +47,12 @@ Em paralelo, o time interno CASE — Queila como autoridade editorial, Felipe Go
 
 - **Curadoria fragmentada**: referências boas vivem em Sheets, prints de WhatsApp, Notion abandonado, posts salvos no Insta de cada um.
 - **Não escala**: cada novo cliente CASE recria a roda. Não existe "biblioteca canônica" de referências com inteligência editorial agregada.
-- **Método não-empacotado**: a Queila tem o método (DECIDA + 4 agentes editoriais) prontos no papel, mas eles não rodam como produto. Ficam como manuais que dependem dela operar.
+- **Método não-empacotado**: a Queila tem o método DECIDA pronto no papel, mas ele não vive em UX nenhuma. O curador interno depende dela operar.
 - **Tentativa anterior travou**: o projeto paralelo do Felipe Gobbi tentou Notion, recuou pra planilha, e fez handoff pro Kaique consolidar.
 
 ### 2.3 Síntese
 
-Os dois problemas se resolvem com **a mesma intervenção**: um banco de referências curado com **campos editoriais obrigatórios** (quando usar / por que funciona / como adaptar) + os **4 agentes editoriais** rodando como módulos consultáveis. O cliente final ganha autonomia. O time CASE ganha escala.
+Os dois problemas se resolvem com **a mesma intervenção**: um banco de referências curado com **campos editoriais obrigatórios** (quando usar / por que funciona / como adaptar) + a taxonomia DECIDA visível na UX + onboarding cliente-facing. O cliente final ganha autonomia. O time CASE ganha escala.
 
 ---
 
@@ -86,9 +86,9 @@ Os dois problemas se resolvem com **a mesma intervenção**: um banco de referê
 |---|---|
 | Quem é | Profissional contratado pelo cliente CASE pra tocar a operação editorial (social media, copy, gestor de tráfego com viés editorial) |
 | Objetivo | Reduzir tempo de pesquisa. Bater referência → entender método → produzir |
-| Contexto de uso | Acessa diariamente. Cruza referências com Mapa de Interesse + Download do Expert do cliente que atende |
+| Contexto de uso | Acessa diariamente. Cruza referências com o briefing/diagnóstico do cliente que atende |
 | Fricção atual | Não tem onde puxar "referência + método + insumo do expert" no mesmo lugar |
-| Sucesso pra ele | Banco filtrável por DECIDA + Vertical, com 4 agentes editoriais rodáveis sob demanda |
+| Sucesso pra ele | Banco filtrável por DECIDA + Vertical, com cada referência trazendo guia de uso completo |
 | Não é | Membro do time CASE. Não tem acesso aos manuais internos da Queila. Aprende pelo produto |
 
 ---
@@ -105,9 +105,9 @@ Invariantes editoriais e técnicas. Cada princípio tem **razão**. Decisões de
 
 ### P2 — Manual antes de automático
 
-**Razão**: o time CASE tem método consolidado (DECIDA + 4 agentes), mas ele só foi validado em operação manual da Queila. Automatizar antes de validar o manual = automatizar erro.
+**Razão**: o método DECIDA da Queila só foi validado em operação manual. Automatizar antes de validar o manual = automatizar erro.
 
-**Implicação**: V1 entrega os 4 agentes como **módulos consultáveis com input/output estruturado**, não como pipeline 100% automático. Automação completa fica pra V2.
+**Implicação**: V1 entrega o banco curado + workflow editorial com gatekeeper humano (3 campos obrigatórios). Automação adicional (coleta via APIs, geração assistida de campos) é planejada como fase 2 (ver §8 Roadmap e doc `fase-2-monitoramento-apis.md`).
 
 ### P3 — DECIDA é a única taxonomia editorial
 
@@ -123,15 +123,15 @@ Invariantes editoriais e técnicas. Cada princípio tem **razão**. Decisões de
 
 ### P5 — Estrutura se copia, conteúdo não
 
-**Razão**: princípio direto do Agente 02 da Queila. É também a defesa do produto contra "isso é só um banco de prints".
+**Razão**: defesa do produto contra "isso é só um banco de prints". Quem usa precisa saber que a estrutura/forma da referência é o que se copia, e o conteúdo se adapta ao próprio contexto.
 
-**Implicação**: campo "como adaptar" guia a copia de estrutura, não de conteúdo. O Modelador (Agente 02) é o operacionalizador desse princípio.
+**Implicação**: campo "como adaptar" guia a copia de estrutura, não de conteúdo. Deixa explícito que copiar literal é uso errado.
 
-### P6 — Toda ideia editorial precisa de insumo do público E insumo do expert
+### P6 — Cliente nunca consome link puro
 
-**Razão**: critério crítico do Agente 01 (Estrategista). Sem isso, output é genérico e não vende. É o que separa "conteúdo de agência" de "conteúdo da CASE".
+**Razão**: link sem explicação editorial não tem o diferencial CASE. Se for só link, qualquer screenshot serve.
 
-**Implicação**: o pipeline editorial dos agentes (V1.5) só aceita ideias com os dois insumos preenchidos. Validação de schema na entrada.
+**Implicação**: nenhum item entra no `/trilhas` sem os 3 campos preenchidos. A view pública (`v_referencias_publicas`) só expõe links que passaram pelo gatekeeper editorial.
 
 ### P7 — Notion está fora. Repo + Supabase é a fonte canônica
 
@@ -143,7 +143,7 @@ Invariantes editoriais e técnicas. Cada princípio tem **razão**. Decisões de
 
 ## 5. Escopo V1
 
-V1 = entregar o sistema editorial completo em modo **manual-first**, com os 4 agentes operáveis e a curadoria com gatekeeper editorial.
+V1 = entregar o banco de referências curado + workflow editorial com gatekeeper humano + onboarding cliente, exatamente o que o handoff Felipe Gobbi pediu.
 
 ### 5.1 Banco de referências curado (extensão do que já existe)
 
@@ -166,36 +166,16 @@ V1 = entregar o sistema editorial completo em modo **manual-first**, com os 4 ag
 - Modal de promoção do `/live` exige os 3 campos `quando_usar`/`por_que_funciona`/`como_adaptar`. Sem eles, o botão "Promover" fica desabilitado
 - Filtros nas páginas `/trilhas` e `/posts` por DECIDA (D+E / C+I+D / A) e Vertical (Clínica / Mentoria)
 
-### 5.2 Os 4 Agentes Editoriais como módulos consultáveis
+### 5.2 Planejamento da fase 2 — monitoramento e APIs
 
-V1 entrega os agentes como **módulos com input estruturado e output estruturado**, rodando manualmente com humano no loop. Cada agente vira uma rota dedicada no `refs.casein.com.br`.
+Documento separado: `fase-2-monitoramento-apis.md`. Captura o que pode entrar **depois** do V1 validado:
 
-#### Agente 00 — Mapa de Interesse
-- Rota: `/agentes/mapa-interesse`
-- Input UI: formulário com campos (público, oferta, sinais externos, concorrentes)
-- Output: documento estruturado com 12 gavetas + top assuntos priorizados
-- Persistência: tabela `agente.mapas_interesse` (uma por cliente)
+- Lista do que faz sentido automatizar (coleta de fontes, classificação, sugestão de campos editoriais).
+- Campos mínimos que a automação teria que preencher.
+- Critérios para escolher fonte/API (RapidAPI etc.).
+- Riscos e cuidados (decisão editorial nunca delegada à API).
 
-#### Agente 00.5 — Download do Expert
-- Rota: `/agentes/download-expert`
-- Input UI: Mapa de Interesse selecionado + perguntas cirúrgicas (formulário guiado)
-- Output: repositório de crenças/teses/provas/histórias do expert
-- Persistência: tabela `agente.downloads_expert` (uma por cliente)
-- Dependência: exige Mapa de Interesse preenchido
-
-#### Agente 01 — Estrategista de Conteúdo Editorial
-- Rota: `/agentes/estrategista`
-- Input UI: Mapa + Download + fase (D+E / Vendas) + capacidade de produção semanal + histórico recente
-- Output: Plano Editorial + Banco de Ideias por linha
-- Validação: cada ideia precisa ter `insumo_publico` E `insumo_expert` preenchidos. Sem isso, marcada como inválida (P6)
-- Persistência: tabela `agente.planos_editoriais` + `agente.ideias_editoriais`
-
-#### Agente 02 — Modelador de Referências
-- Rota: `/agentes/modelador`
-- Input UI: referência do banco (selecionável) + ideia do banco de ideias + formato visual
-- Output: roteiro modelado (estrutura preservada, conteúdo adaptado)
-- Princípio enforçado no UI: separação visual entre "estrutura copiada" e "conteúdo novo" (P5)
-- Persistência: tabela `agente.roteiros_modelados`
+Regra principal do handoff: **API entra para acelerar a operação. Não para decidir a lógica editorial.**
 
 ### 5.3 Onboarding cliente — página "Como usar"
 
@@ -240,11 +220,11 @@ Itens conscientemente excluídos. Cada exclusão tem razão.
 
 | Item fora de V1 | Razão | Quando entra |
 |---|---|---|
-| Agente 03 — Roteirista | Não validado pela Queila ainda. Material no STATUS marca como "futuro" | V2 (depois de validar fluxo Estrategista → Modelador em uso real) |
-| Pipeline 100% automático Mapa → Download → Estrategista → Modelador | P2 (manual antes de automático). Automatizar antes de validar = automatizar erro | V2 (depois de 30+ ciclos manuais validados) |
-| Multi-fonte de ingest (RapidAPI, TikTok, YouTube além do Apify Insta) | n8n + Apify Insta cobre o uso atual. Adicionar fontes sem demanda = complexidade prematura | V1.5 ou V2 (quando curador pedir) |
-| Sistema de comentários/colaboração entre clientes | Não foi pedido no handoff. Pode virar atrito de moderação | V3 ou nunca |
+| Pipeline LLM gerando campos editoriais automaticamente | P2 (manual antes de automático). Validar gatekeeper humano primeiro | V1.5 ou V2 |
+| Multi-fonte de ingest (RapidAPI, TikTok, YouTube além do Apify Insta) | n8n + Apify Insta cobre o uso atual. Adicionar fontes sem demanda = complexidade prematura. Doc `fase-2-monitoramento-apis.md` lista candidatos | V1.5 ou V2 (quando curador pedir) |
+| Sistema de comentários/colaboração entre clientes | Não foi pedido no handoff | V3 ou nunca |
 | App mobile dedicado | Web responsivo cobre 95% do uso real. App nativo é overkill pra V1 | Não previsto |
+| Módulos de "agentes editoriais" como rotas no produto | Não foi pedido no handoff Felipe Gobbi. Material da Queila sobre o método dela vive em pasta separada | Não previsto |
 | Login/auth pra cliente CASE | Hoje o produto é público. Acesso restrito muda o modelo. Validar uso primeiro | V2 (se houver demanda real de gating) |
 | Migração de dados Notion/Sheets antigos | Handoff Felipe não tem volume crítico de dados pra migrar. Começar do zero é mais limpo | Nunca (descartado por D5 do handoff) |
 | Integração com ClickUp/Asana | Time CASE já tem fluxo próprio. Forçar integração = atrito | V2+ se demandado |
@@ -264,9 +244,6 @@ Métricas pareadas: cada quantitativa tem uma qualitativa de contexto.
 | % refs promovidas com 3 campos editoriais preenchidos | ≥ 80% | Mede aderência ao gatekeeper (P1). Abaixo disso = curador burlou ou UX falhou |
 | Tempo médio de promoção por item | ≤ 3 min | Curador não vai usar se for friccional. Acima de 5 min = modal precisa redesign |
 | Refs ativas em `/trilhas` no fim do mês 1 | ≥ 100 (75 atuais + 25 novas curadas) | Banco precisa crescer de forma controlada. Crescimento zero = curadoria parada |
-| Mapas de Interesse criados | ≥ 3 (pelo menos 1 da Queila + 2 de cliente piloto) | Sem uso real, agente vira documentação morta |
-| Downloads do Expert criados | ≥ 2 | Mesmo critério |
-| Roteiros modelados (Agente 02) | ≥ 5 | Mesmo critério |
 | Visitas únicas mês 1 ao `/como-usar` | ≥ 60% das visitas únicas à landing | Se cliente não acessa o onboarding, a UX da landing falhou em direcioná-lo |
 
 ### 7.2 Qualitativas
@@ -313,12 +290,11 @@ Entregáveis:
 
 Critério de avanço: 30+ ciclos completos de uso real (Mapa → Download → Plano → Modelador) registrados, com taxa de "output utilizado" ≥ 60%.
 
-### V2 — Pipeline editorial automático
+### V2 — Automação editorial assistida
 
 Entregáveis:
-- Agente 03 — Roteirista (depois de validado pela Queila)
-- Pipeline encadeado Mapa → Download → Estrategista → Modelador → Roteirista com revisão humana só nos pontos críticos
-- Sugestão automática de "ref relevante" baseada no Mapa do cliente
+- Implementação da fase 2 conforme `fase-2-monitoramento-apis.md` (coleta multi-fonte + sugestão automática de campos editoriais com revisão humana)
+- Sugestão automática de "ref relevante" baseada no perfil do cliente
 - Possível auth/gating de acesso por cliente
 
 Critério de avanço: pipeline V2 entrega resultado igual ou melhor que operação 100% manual em teste cego.
@@ -407,11 +383,8 @@ Top 5 riscos que podem matar o V1.
 | Schema (4 colunas editoriais) | Kaique | Kaique | Queila (nomes dos campos) | Time CASE |
 | Modal promoção com gatekeeper | Kaique | Kaique | Queila (UX) | Curador |
 | Página `/como-usar` | Kaique | Queila | Kaique (impl), Cliente piloto (validação) | Time CASE |
-| Agente 00 — Mapa de Interesse | Kaique | Queila | Kaique (impl) | — |
-| Agente 00.5 — Download do Expert | Kaique | Queila | Kaique (impl) | — |
-| Agente 01 — Estrategista | Kaique | Queila | Kaique (impl) | — |
-| Agente 02 — Modelador | Kaique | Queila | Kaique (impl) | — |
-| ADRs 0001-0004 | Kaique | Kaique | Queila (0001 e 0002) | Time CASE |
+| Doc `fase-2-monitoramento-apis.md` | Kaique | Kaique | Time CASE | — |
+| ADRs 0001-0002, 0004-0005 | Kaique | Kaique | Queila (0001 e 0002) | Time CASE |
 | Guia do curador | Kaique | Queila | Curador piloto | Time CASE |
 | Validação V1 com cliente piloto | Queila | Queila | Kaique (instrumentação) | Cliente |
 
@@ -447,10 +420,6 @@ Trade-offs feitos conscientemente em V1. Documentados pra que futura-Queila/futu
 - **A**: Ação / Decisão (0-10%, ramp em fase de vendas).
 - **Trilha**: separação por vertical de cliente CASE (CLINIC para clínicas; SCALE para mentorias/consultorias/infoprodutos). Aparece como "Clínica" / "Mentoria" no front.
 - **Promover**: ação de mover uma referência do estado pendente (`/live`) pro banco curado (`/trilhas`).
-- **Mapa de Interesse**: output do Agente 00 — 12 gavetas estruturadas (dores, desejos, etc.) sobre o público.
-- **Download do Expert**: output do Agente 00.5 — repositório de crenças/teses/provas/histórias do expert.
-- **Plano Editorial**: output do Agente 01 — sequência de ideias com objetivo, linha, insumos, tensão e gancho.
-- **Roteiro Modelado**: output do Agente 02 — roteiro que preserva estrutura de uma referência mas adapta conteúdo.
 
 ---
 

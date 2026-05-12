@@ -24,7 +24,7 @@ depends_on: [E01, E02, E03, E04-S1, E05-S1, E06-S1, E07-S1]
 1. `docs/specs/content-system/CHANGELOG.md` criado com seções `[1.0.0] — 2026-05-12 — V1 Release` listando todas as features entregues + bugs corrigidos.
 2. `docs/specs/content-system/test-runs/` tem ao menos 1 smoke run PASS por agente (`E04`, `E05`, `E06`, `E07`).
 3. Checklist de sanidade pós-deploy executada (ver Tasks abaixo).
-4. Baseline de uso registrada: contagem de itens em cada tabela `agente.*` no dia do release.
+4. Baseline de uso registrada: contagem de itens em `agente.referencias_conteudo` (promovidos vs pendentes) no dia do release.
 5. README do `content-system/` lista o V1 como "released" com data e link pro CHANGELOG.
 
 ## Tasks
@@ -32,7 +32,7 @@ depends_on: [E01, E02, E03, E04-S1, E05-S1, E06-S1, E07-S1]
 - [x] Redigir CHANGELOG.md
 - [x] Smoke E2E real de cada um dos 4 agentes via curl (test-runs/E04-E07-agentes-smoke-2026-05-12.md PASS)
 - [x] Verificar links de navegação em todas as páginas (todas atualizadas com nav 'Agentes')
-- [x] Query baseline: ver test-run (1 row de smoke em cada agente + 1 plano extra inválido)
+- [x] Query baseline: contagem de itens promovidos via E02 (smoke test-run em test-runs/E02-smoke-2026-05-12.md)
 - [x] Atualizar README com data + status released (1.0.0 — 2026-05-12)
 
 ## Dev Notes

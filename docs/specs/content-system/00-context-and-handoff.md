@@ -70,49 +70,13 @@ Estrutura de **objetivos editoriais** organizada em 3 blocos:
 1. Renomear/relabel `CONFIANCA` → `C+I+D` (Confiança+Identificação+Desejo)
 2. Documentar a regra de mix (70/30/0-10) no guia de uso
 
-**Fonte canônica**: `~/Downloads/copia projeto agentes/Manuais dos agentes/05_Base_Metodologica/metodologia_referencia_agentes.md` (linhas 36-77) e `STATUS_DOS_AGENTES.md` (linha 110).
+**Fonte canônica do método DECIDA**: material consolidado da Queila (texto curto que descreve os 3 grupos e a regra de mix).
+
+> **Nota retrospectiva (2026-05-12)**: a primeira versão desta seção 4 listava também os "4 agentes editoriais" do método interno da Queila (Mapa de Interesse, Download do Expert, Estrategista, Modelador) como se fossem escopo de produto. **Não eram.** O handoff Felipe Gobbi pediu banco curado + workflow editorial + onboarding cliente + planejamento fase 2 APIs — não pediu agentes. A seção foi revogada e o que tinha sido implementado em código (`/agentes/*`, tabelas `agente.mapas_interesse` etc.) foi removido. Ver commit `revert(content-system): remove agentes fora do escopo do handoff`.
 
 ---
 
-## 4. Os 4 Agentes Editoriais da Queila
-
-Todos prontos e validados pelo material (STATUS_DOS_AGENTES.md). Ordem de execução:
-
-```
-Agente 00 (Mapa de Interesse)
-   ↓
-Agente 00.5 (Download do Expert)
-   ↓
-Agente 01 (Estrategista de Conteúdo Editorial)
-   ├→ Agente 02 (Modelador de Referências) — opcional, paralelo
-   └→ Agente 03 (Roteirista) — futuro, fora do V1
-```
-
-### Agente 00 — Mapa de Interesse
-- **Input**: público (quem, nível, contexto), oferta/promessa, sinais externos (YouTube, TikTok, comentários, concorrentes)
-- **Output**: 12 gavetas (dores, desejos, medos, dúvidas, erros, crenças, valores, comparações, cenas, identidades, inimigos, referências) + top assuntos priorizados
-- **Status**: Pronto
-
-### Agente 00.5 — Download do Expert
-- **Input**: Mapa de Interesse + perguntas cirúrgicas (opiniões, valores, provas, cases, histórias, método, frases próprias)
-- **Output**: Repositório de crenças/teses/provas/histórias/storytelling/método/linguagem do expert
-- **Status**: Aprovado e finalizado
-
-### Agente 01 — Estrategista de Conteúdo Editorial
-- **Input**: Mapa + Download + fase (D+E ou Vendas) + capacidade de produção + histórico
-- **Output**: Plano Editorial + Banco de Ideias por linha (objetivo, linha, insumo público, insumo expert, tensão de captura, gancho)
-- **Critério crítico**: TODA ideia precisa ter insumo do público E insumo do expert. Senão output é inválido.
-- **Status**: Aprovado
-
-### Agente 02 — Modelador de Referências
-- **Input**: referência externa (link/vídeo/carrossel) + formato visual + ideia a encaixar
-- **Output**: roteiro modelado (estrutura preservada, conteúdo adaptado)
-- **Princípio**: copia ESTRUTURA, não copia CONTEÚDO
-- **Status**: Aprovado pra uso inicial
-
----
-
-## 5. Gap Analysis — handoff vs. estado atual
+## 4. Gap Analysis — handoff vs. estado atual
 
 | Pedido handoff | Estado atual | Gap | Prioridade |
 |---|---|---|---|
@@ -123,58 +87,53 @@ Agente 01 (Estrategista de Conteúdo Editorial)
 | Campo "como adaptar" | ❌ ausente | Adicionar coluna + obrigar na promoção | P0 |
 | Campo "objetivo" (separado de etapa) | ❌ | Adicionar (Atrair, Identificar, Desejo, Confiar, Vender) | P1 |
 | Página "Como usar" cliente-facing | ❌ | Criar `/como-usar.html` | P0 |
-| Agente 00 (Mapa de Interesse) | ❌ não implementado | Construir pipeline + UI | P1 |
-| Agente 00.5 (Download Expert) | ❌ | Construir pipeline + UI | P1 |
-| Agente 01 (Estrategista) | ❌ | Construir pipeline + UI | P2 |
-| Agente 02 (Modelador) | ❌ | Construir pipeline + UI | P2 |
 | Workflow editorial promoção c/ campos | 🟡 parcial (promote sem campos) | Modal de promoção exigir 3 campos | P0 |
-| Validação com uso real | ❌ | Roadmap de testes com Queila/cliente | P2 |
-| Roadmap automação fase 2 | parcial (já tem n8n) | Documentar próximas fontes (RapidAPI etc) | P3 |
+| Validação com uso real (cliente piloto) | ❌ | Roadmap de testes com Queila/cliente real | P2 |
+| Roadmap automação fase 2 (RapidAPI etc.) | ❌ | Doc `fase-2-monitoramento-apis.md` | P0 |
+| Subtarefa "resumir feedback / organizar pontos de melhoria" | ❌ | Mecanismo de captura de feedback do cliente | P2 |
+| Migração de dados existentes do Sheets ativo da Queila | ❌ | Importar `1vwg2H_70YGygaGl1AwW-WLSG0kdqkE2T1UBNpjEXfA4` | P1 |
 
 ---
 
-## 6. Decisões Estratégicas Tomadas (validar com Kaique)
+## 5. Decisões Estratégicas Tomadas
 
 - **D1**: Adotar DECIDA como taxonomia oficial. Renomear `etapa_funil.CONFIANCA` → label "C+I+D" no front (sem migration de dados).
 - **D2**: Campos "quando usar / por que funciona / como adaptar" são **obrigatórios na promoção** (gatekeeper).
-- **D3**: V1 inclui os 4 agentes editoriais como módulos (Epics próprios).
+- **D3**: ~~V1 inclui os 4 agentes editoriais como módulos~~ — **REVOGADA 2026-05-12**. Os 4 agentes não estavam no handoff Felipe Gobbi; foram enxertados por erro de leitura do material da Queila. Removidos via commit `revert(content-system): remove agentes fora do escopo do handoff`.
 - **D4**: Docs vivem em `case-references/docs/specs/content-system/` no repo do site.
 - **D5**: `refs.casein.com.br` é o produto. Notion/planilha do handoff são abandonados.
 
 ---
 
-## 7. Mapa de Pastas do Projeto
+## 6. Mapa de Pastas do Projeto
 
 ```
 case-references/
-├── index.html, trilhas.html, posts.html, live.html, dashboard.html
+├── index.html, trilhas.html, posts.html, live.html, dashboard.html, como-usar.html
+├── _auth.js, _decida.js, _tour.js
 ├── supabase/
-│   ├── migrations/      # 20260430_, 20260512_promotion, [novos]
+│   ├── migrations/      # 20260430..20260513
 │   └── functions/case-refs-mutate/
 └── docs/specs/content-system/
     ├── 00-context-and-handoff.md   ← este arquivo
     ├── 01-prd.md                   ← visão de produto consolidada
     ├── 02-spec-tech.md             ← arquitetura técnica
+    ├── guia-decida.md              ← guia DECIDA cliente-facing
+    ├── fase-2-monitoramento-apis.md← backlog fase 2 (pedido handoff)
+    ├── CHANGELOG.md
     ├── adrs/                       ← decisões arquiteturais
     │   ├── 0001-decida-taxonomy.md
     │   ├── 0002-promotion-mandatory-fields.md
-    │   └── ...
-    ├── epics/                      ← breakdown por epic
-    │   ├── E01-foundations-decida.md
-    │   ├── E02-curadoria-editorial.md
-    │   ├── E03-onboarding-cliente.md
-    │   ├── E04-agente-mapa-interesse.md
-    │   ├── E05-agente-download-expert.md
-    │   ├── E06-agente-estrategista.md
-    │   ├── E07-agente-modelador.md
-    │   └── E08-validacao-e-rollout.md
-    └── stories/                    ← stories AIOX-format
-        └── ...
+    │   ├── 0004-frontend-stays-static-with-dynamic-overlay.md
+    │   └── 0005-keep-n8n-pipeline-extend-not-replace.md
+    ├── epics/                      ← E01, E02, E03, E08
+    ├── stories/                    ← 16 stories (E01-S1..S5, E02-S1..S6, E03-S1..S4, E08-S1)
+    └── test-runs/
 ```
 
 ---
 
-## 8. Referências Externas Consolidadas
+## 7. Referências Externas Consolidadas
 
 **Material Queila (canônico)**:
 - `~/Downloads/copia projeto agentes/STATUS_DOS_AGENTES.md` — matriz de prontidão
