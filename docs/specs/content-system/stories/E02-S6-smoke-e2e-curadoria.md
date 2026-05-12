@@ -3,7 +3,7 @@ id: E02-S6
 title: "Smoke E2E: fluxo curadoria completo"
 type: story
 epic: E02
-status: Draft
+status: Done (test-run 2026-05-12 PASS 6/6)
 priority: P0
 estimated_effort: S
 date: 2026-05-12

@@ -1,7 +1,7 @@
 ---
 title: "E03 — Onboarding do Cliente"
 type: epic
-status: code-complete (3 stories Done, S3 com placeholders aguardando Queila)
+status: Done (4/4 stories)
 priority: P0
 depends_on: [E01, E02]
 estimated_stories: 4

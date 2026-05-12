@@ -3,7 +3,7 @@ id: E02-S4
 title: "Modal de promoção: 3 campos obrigatórios"
 type: story
 epic: E02
-status: Review (front pronto, depende de E02-S1+S2+S3 aplicados em prod)
+status: Done (front em prod 2026-05-12)
 priority: P0
 estimated_effort: M
 date: 2026-05-12

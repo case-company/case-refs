@@ -3,12 +3,14 @@
 //   { op: 'update_note', id: number, notas: string }
 //   { op: 'update_tags', id: number, tags: string[] }
 //   { op: 'soft_delete', id: number }
-//   { op: 'promote', id: number }                       -- legacy, sem campos editoriais (DEPRECATED apos E02)
 //   { op: 'promote_editorial', id: number,
 //     quando_usar: string, por_que_funciona: string,
-//     como_adaptar: string, objetivo?: string }         -- novo fluxo E02 com 3 campos obrigatorios
+//     como_adaptar: string, objetivo?: string }         -- E02: 3 campos obrigatorios
 //   { op: 'unpromote', id: number }                     -- volta pro /live
 // Delega pra RPC functions no schema public (SECURITY DEFINER) que escrevem em agente.
+//
+// op 'promote' (legacy) foi removido — a check constraint
+// chk_promoted_requires_editorial_fields impede promover sem os 3 campos.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -60,26 +62,20 @@ Deno.serve(async (req) => {
     const notas = typeof body.notas === "string" ? body.notas : "";
     const r = await callRpc("case_refs_update_note", { p_id: id, p_notas: notas });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
-    return jsonResponse({ ok: true, op, ...r.data });
+    return jsonResponse({ ok: true, op, data: r.data });
   }
 
   if (op === "update_tags") {
     const tags = Array.isArray(body.tags) ? body.tags.map((t: any) => String(t)) : [];
     const r = await callRpc("case_refs_update_tags", { p_id: id, p_tags: tags });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
-    return jsonResponse({ ok: true, op, ...r.data });
+    return jsonResponse({ ok: true, op, data: r.data });
   }
 
   if (op === "soft_delete") {
     const r = await callRpc("case_refs_soft_delete", { p_id: id });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
-    return jsonResponse({ ok: true, op, ...r.data });
-  }
-
-  if (op === "promote") {
-    const r = await callRpc("case_refs_promote", { p_id: id });
-    if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
-    return jsonResponse({ ok: true, op, ...r.data });
+    return jsonResponse({ ok: true, op, data: r.data });
   }
 
   if (op === "promote_editorial") {
@@ -112,13 +108,13 @@ Deno.serve(async (req) => {
       const isFieldsErr = typeof r.error === "string" && r.error.includes("missing_editorial_fields");
       return jsonResponse({ ok: false, error: r.error }, isFieldsErr ? 422 : 500);
     }
-    return jsonResponse({ ok: true, op, ...r.data });
+    return jsonResponse({ ok: true, op, data: r.data });
   }
 
   if (op === "unpromote") {
     const r = await callRpc("case_refs_unpromote", { p_id: id });
     if (!r.ok) return jsonResponse({ ok: false, error: r.error }, 500);
-    return jsonResponse({ ok: true, op, ...r.data });
+    return jsonResponse({ ok: true, op, data: r.data });
   }
 
   return jsonResponse({ ok: false, error: "unknown_op", op }, 400);

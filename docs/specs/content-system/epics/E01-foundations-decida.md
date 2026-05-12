@@ -1,7 +1,7 @@
 ---
 title: "E01 — Foundations DECIDA"
 type: epic
-status: in-progress (4 stories done, 1 em review)
+status: Done (5/5 stories)
 priority: P0
 depends_on: []
 estimated_stories: 5

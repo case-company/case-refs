@@ -1,7 +1,7 @@
 ---
 title: "E02 — Curadoria Editorial"
 type: epic
-status: code-complete (5/6 stories prontas, smoke E2E pendente)
+status: Done (6/6 stories, smoke PASS 2026-05-12)
 priority: P0
 depends_on: [E01]
 estimated_stories: 6

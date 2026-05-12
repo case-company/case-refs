@@ -3,7 +3,7 @@ id: E02-S3
 title: "Views: expor campos editoriais sem `notas`"
 type: story
 epic: E02
-status: Review (SQL escrito, pendente `supabase db push`)
+status: Done (aplicada em prod via Dashboard 2026-05-12)
 priority: P0
 estimated_effort: S
 date: 2026-05-12

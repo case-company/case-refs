@@ -3,7 +3,7 @@ id: E02-S2
 title: "Edge Function: op promote_editorial"
 type: story
 epic: E02
-status: Review (código pronto, pendente `supabase functions deploy`)
+status: Done (deployed em prod 2026-05-12)
 priority: P0
 estimated_effort: M
 date: 2026-05-12

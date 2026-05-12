@@ -3,7 +3,7 @@ id: E01-S4
 title: "Redigir guia-decida.md cliente-facing"
 type: story
 epic: E01
-status: Review (draft pronto, pendente aprovação Queila)
+status: Done (Queila optou por não revisar — texto final é o draft)
 priority: P0
 estimated_effort: M
 date: 2026-05-12
