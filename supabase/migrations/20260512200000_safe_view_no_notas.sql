@@ -1,43 +1,39 @@
--- Safe-view: substitui SELECT * por whitelist explícita de colunas em
--- v_referencias_publicas, excluindo `notas` (campo interno de curador).
+-- Safe-view: substitui SELECT * por whitelist explicita em
+-- v_referencias_publicas, excluindo `notas` (campo interno do curador).
 --
--- Motivo: as migrations anteriores (20260430140000 e 20260512000000) usam
--- `SELECT * FROM agente.referencias_conteudo` o que expõe a coluna `notas`
--- (texto interno do curador) via anon key. Hoje a coluna está vazia, mas
--- assim que E01/E02 entrar e curadores começarem a anotar coisas tipo
--- "mentorada X ainda nao pagou — nao promover", esse texto vaza para o
--- mundo. Esta migration tampa o vazamento ANTES que E01 popule.
---
--- Esta migration é idempotente (CREATE OR REPLACE) e reversível
--- (basta reaplicar a versao anterior do CREATE OR REPLACE).
+-- Por que DROP + CREATE em vez de CREATE OR REPLACE:
+--   o SELECT * anterior gerou a view com ordem fixa de colunas que
+--   inclui `notas` no meio. CREATE OR REPLACE exige preservar nome+ordem
+--   das colunas; pra remover `notas` do meio precisamos recriar a view.
 
-CREATE OR REPLACE VIEW public.v_referencias_publicas AS
+DROP VIEW IF EXISTS public.v_referencias_publicas;
+
+CREATE VIEW public.v_referencias_publicas AS
   SELECT
     id,
     perfil,
     trilha,
     tipo_artefato,
     posicao,
+    resumo,
+    tipo_estrategico,
+    etapa_funil,
+    thumb_url,
     url,
     shortcode,
-    formato,
+    highlight_id,
     caption,
-    display_url,
-    video_url,
-    cover_url,
-    titulo,
     likes,
     comments,
     views,
-    timestamp_post,
+    tem_transcricao,
     transcricao,
     language_code,
     audio_duration_ms,
-    tipo_estrategico,
-    etapa_funil,
+    origem,
     tags,
-    promoted_at,
-    created_at
+    created_at,
+    promoted_at
   FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL;
 
