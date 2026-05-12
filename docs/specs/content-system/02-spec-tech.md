@@ -153,11 +153,22 @@ CREATE INDEX IF NOT EXISTS idx_refs_etapa_promoted
   ON agente.referencias_conteudo (etapa_funil, promoted_at)
   WHERE deleted_at IS NULL AND promoted_at IS NOT NULL;
 
--- View pública estendida (mesma signature, novos campos visíveis)
+-- View pública estendida — whitelist explícita SEM `notas` (campo interno do curador).
+-- Migration 20260512200000_safe_view_no_notas.sql já trocou SELECT * por whitelist;
+-- aqui a gente só ESTENDE com os campos editoriais novos (sem reintroduzir `notas`).
 CREATE OR REPLACE VIEW public.v_referencias_publicas AS
-  SELECT * FROM agente.referencias_conteudo WHERE deleted_at IS NULL;
+  SELECT
+    id, perfil, trilha, tipo_artefato, posicao, url, shortcode, formato,
+    caption, display_url, video_url, cover_url, titulo,
+    likes, comments, views, timestamp_post,
+    transcricao, language_code, audio_duration_ms,
+    tipo_estrategico, etapa_funil, objetivo,
+    quando_usar, por_que_funciona, como_adaptar,
+    tags, promoted_at, created_at, updated_at
+  FROM agente.referencias_conteudo
+  WHERE deleted_at IS NULL;
 
--- View especializada de promovidos (atalho pro front)
+-- View especializada de promovidos (atalho pro front) — também SEM `notas`.
 CREATE OR REPLACE VIEW public.v_referencias_promovidas AS
   SELECT
     id, perfil, trilha, tipo_artefato, posicao, url, shortcode, formato,
@@ -166,7 +177,7 @@ CREATE OR REPLACE VIEW public.v_referencias_promovidas AS
     transcricao, language_code, audio_duration_ms,
     tipo_estrategico, etapa_funil, objetivo,
     quando_usar, por_que_funciona, como_adaptar,
-    notas, tags, promoted_at
+    tags, promoted_at
   FROM agente.referencias_conteudo
   WHERE deleted_at IS NULL AND promoted_at IS NOT NULL
   ORDER BY promoted_at DESC;
@@ -828,7 +839,7 @@ ALTER TABLE agente.roteiros_modelados  ENABLE ROW LEVEL SECURITY;
 ### 8.6 PII
 
 - Caption + transcrição podem conter nomes/handles. View pública expõe ambos — comportamento atual mantido (já é conteúdo público IG).
-- `notas` do curador é interna → fica em `referencias_conteudo` mas nunca é exposta na view pública (`v_referencias_publicas` herda `SELECT *` — **revisar**: criar view pública sem `notas` na próxima minor).
+- `notas` do curador é interna → fica em `referencias_conteudo` mas **nunca** é exposta nas views públicas. Migration `20260512200000_safe_view_no_notas.sql` substituiu o `SELECT *` por whitelist explícita de colunas em `v_referencias_publicas` e `v_referencias_promovidas`. Regra: **antes de adicionar coluna nova a essas views, conferir se ela pode ser exposta ao anon.**
 
 ---
 
