@@ -7,9 +7,10 @@
 
 ```
 APIFY_TOKEN=<sua chave Apify — pega no app.apify.com/settings/integrations>
-SUPABASE_SERVICE_ROLE=<service_role do projeto Case>
 OPENROUTER_API_KEY=<sua chave openrouter.ai/keys>
 ```
+
+Postgres (Supabase) você já tem credencial salva no n8n — usar nó nativo **Postgres** nos nós 2 e 11.
 
 ---
 
@@ -21,21 +22,15 @@ OPENROUTER_API_KEY=<sua chave openrouter.ai/keys>
 
 ---
 
-## Nó 2 — HTTP Request (seed top players)
+## Nó 2 — Postgres (seed top players)
 
-- Tipo: **HTTP Request**
-- Method: `POST`
-- URL: `https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_top_players_seed`
-- Send Headers: **ON**
-  - `apikey` = `={{$env.SUPABASE_SERVICE_ROLE}}`
-  - `Authorization` = `=Bearer {{$env.SUPABASE_SERVICE_ROLE}}`
-  - `Content-Type` = `application/json`
-- Send Body: **ON**
-- Body Content Type: **JSON**
-- Specify Body: **Using JSON**
-- JSON:
-  ```json
-  {"p_limit": 30, "p_min_score": 60}
+- Tipo: **Postgres**
+- Credential: a do Supabase Case já cadastrada
+- Operation: **Execute Query**
+- Query:
+  ```sql
+  SELECT perfil, refs_count, max_score, trilha
+    FROM public.case_refs_top_players_seed(30, 60);
   ```
 
 ---
@@ -43,9 +38,10 @@ OPENROUTER_API_KEY=<sua chave openrouter.ai/keys>
 ## Nó 3 — Code (monta input Apify)
 
 - Tipo: **Code** (JavaScript)
+- Mode: **Run Once for All Items**
 - Code:
 ```javascript
-const rows = $input.first().json;
+const rows = $input.all().map(n => n.json);
 const urls = rows.map(r => `https://www.instagram.com/${r.perfil}/`);
 return [{ json: { directUrls: urls, resultsType: 'posts', resultsLimit: 10, addParentData: false } }];
 ```
@@ -242,18 +238,17 @@ return [{ json: { p_items: items } }];
 
 ---
 
-## Nó 11 — HTTP Request (POST inbox_submit)
+## Nó 11 — Postgres (chama case_refs_inbox_submit)
 
-- Method: `POST`
-- URL: `https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_inbox_submit`
-- Send Headers: **ON**
-  - `apikey` = `={{$env.SUPABASE_SERVICE_ROLE}}`
-  - `Authorization` = `=Bearer {{$env.SUPABASE_SERVICE_ROLE}}`
-  - `Content-Type` = `application/json`
-- Send Body: **ON**
-- Body Content Type: **JSON**
-- Specify Body: **Using JSON**
-- JSON: `={{ JSON.stringify($json) }}`
+- Tipo: **Postgres**
+- Credential: a mesma do Supabase Case
+- Operation: **Execute Query**
+- Query (parameterizada — n8n substitui `$1` pelo Query Parameters):
+  ```sql
+  SELECT inserted_count, rejected_count, rejected_reasons
+    FROM public.case_refs_inbox_submit($1::jsonb);
+  ```
+- Query Parameters: `={{ JSON.stringify($json.p_items) }}`
 
 ---
 
@@ -263,10 +258,11 @@ return [{ json: { p_items: items } }];
 - Code:
 ```javascript
 const r = $input.first().json;
+// Postgres node devolve direto a row (não array como REST)
 return [{ json: {
-  inserted: r[0]?.inserted_count || 0,
-  rejected: r[0]?.rejected_count || 0,
-  rejected_reasons: r[0]?.rejected_reasons || [],
+  inserted: r.inserted_count || 0,
+  rejected: r.rejected_count || 0,
+  rejected_reasons: r.rejected_reasons || [],
   ran_at: new Date().toISOString()
 }}];
 ```
