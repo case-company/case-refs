@@ -99,17 +99,40 @@
     },
     {
       "parameters": {
-        "command": "=cat <<'EOF' | python3 /Users/kaiquerodrigues/Downloads/case-references/scripts/classificador_llm.py\n{{JSON.stringify($json)}}\nEOF"
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
+            {"name": "anthropic-version", "value": "2023-06-01"},
+            {"name": "content-type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"system\": \"Voce e curador editorial seguindo o metodo DECIDA da Queila Trizotti (Case). Classifica 1 referencia de conteudo do Instagram. Responde APENAS JSON puro sem markdown.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"DADOS:\\nPerfil: @{{$json.ownerUsername || 'desconhecido'}}\\nCaption: {{($json.caption || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 2000)}}\\nTranscricao: {{($json.transcricao || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 3000)}}\\nLikes: {{$json.likesCount || 0}} / Views: {{$json.videoViewCount || $json.videoPlayCount || 0}}\\nDuracao: {{$json.videoDuration || 0}}s\\n\\nCLASSIFIQUE em JSON puro:\\n{\\n  \\\"trilha\\\": \\\"clinic\\\" OU \\\"scale\\\",\\n  \\\"etapa_funil\\\": \\\"DESCOBERTA\\\" OU \\\"CONFIANCA\\\" OU \\\"ACAO\\\",\\n  \\\"tipo_estrategico\\\": UMA das 10 linhas: \\\"Alerta de Erro, Perda ou Risco\\\" | \\\"Ganho, Solucao ou Caminho\\\" | \\\"Contrassenso / Quebra de Crenca\\\" | \\\"Comparacao / Contraste\\\" | \\\"CIS / Identificacao\\\" | \\\"Historia / Curiosidade / Experiencia\\\" | \\\"Prova / Case / Autoridade\\\" | \\\"Mecanismo / Metodo / Causa Real\\\" | \\\"Analise / Decodificacao\\\" | \\\"Objecao / Decisao / Acao\\\",\\n  \\\"objetivo\\\": \\\"Atrair\\\" | \\\"Identificar\\\" | \\\"Desejo\\\" | \\\"Confiar\\\" | \\\"Vender\\\",\\n  \\\"quando_usar\\\": frase 30-180 chars: quando no calendario usar,\\n  \\\"por_que_funciona\\\": frase 40-200 chars: mecanica editorial concreta,\\n  \\\"como_adaptar\\\": frase 40-220 chars: caminho pratico cliente CASE,\\n  \\\"quality_score\\\": 0-100 inteiro\\n}\\n\\nREGRAS:\\n- DECIDA mix 60% D+E / 30% C+I+D / 10% A\\n- pt-BR tom consultivo\\n- Zero anglicismos\\n- Zero ROI/semanas/garantia\\n- Sem prosa antes/depois do JSON\\n\"\n    }\n  ]\n}",
+        "options": {"timeout": 60000}
       },
       "id": "classificador-llm",
-      "name": "Classificador LLM",
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "name": "Classificador (Anthropic)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [1780, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Monta items pro RPC inbox_submit\nconst items = $input.all().map(n => {\n  const item = n.json.item || n.json;\n  const cls = typeof n.json.stdout === 'string' ? JSON.parse(n.json.stdout) : n.json;\n  return {\n    shortcode: item.shortCode,\n    url: `https://www.instagram.com/p/${item.shortCode}/`,\n    perfil: item.ownerUsername,\n    tipo_artefato: item.type === 'Video' ? 'reel' : 'publicacao_avulsa',\n    plataforma: 'instagram',\n    caption: item.caption,\n    display_url: item.displayUrl,\n    video_url: item.videoUrl,\n    cover_url: item.displayUrl,\n    likes: item.likesCount,\n    comments: item.commentsCount,\n    views: item.videoViewCount || item.videoPlayCount,\n    timestamp_post: item.timestamp,\n    transcricao: item.transcricao,\n    language_code: 'pt',\n    audio_duration_ms: (item.videoDuration || 0) * 1000,\n    trilha: cls.trilha,\n    etapa_funil: cls.etapa_funil,\n    tipo_estrategico: cls.tipo_estrategico,\n    objetivo: cls.objetivo,\n    quando_usar: cls.quando_usar,\n    por_que_funciona: cls.por_que_funciona,\n    como_adaptar: cls.como_adaptar,\n    quality_score: cls.quality_score,\n    origem: 'pipeline_semanal',\n    top_player_perfil: item.ownerUsername,\n  };\n});\nreturn [{json: {p_items: items}}];"
+        "jsCode": "// Extrai JSON do response Anthropic e funde com o item original\nconst itemOriginal = $('Merge Apify+Whisper').item.json;\nconst resp = $input.first().json;\nconst raw = resp.content?.[0]?.text || '';\nlet cls = {};\ntry {\n  let s = raw.trim();\n  if (s.startsWith('```')) { s = s.split('```')[1]; if (s.startsWith('json')) s = s.slice(4); }\n  const m = s.match(/\\{[\\s\\S]*\\}/);\n  if (m) cls = JSON.parse(m[0]);\n} catch (e) { console.error('parse failed', e, raw); }\nreturn [{json: {...itemOriginal, ...cls}}];"
+      },
+      "id": "parse-classificacao",
+      "name": "Parse classificacao",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1890, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cada item ja vem com Apify + transcricao + classificacao fundidos.\nconst items = $input.all().map(n => {\n  const it = n.json;\n  return {\n    shortcode: it.shortCode,\n    url: `https://www.instagram.com/p/${it.shortCode}/`,\n    perfil: it.ownerUsername,\n    tipo_artefato: it.type === 'Video' ? 'reel' : 'publicacao_avulsa',\n    plataforma: 'instagram',\n    caption: it.caption,\n    display_url: it.displayUrl,\n    video_url: it.videoUrl,\n    cover_url: it.displayUrl,\n    likes: it.likesCount,\n    comments: it.commentsCount,\n    views: it.videoViewCount || it.videoPlayCount,\n    timestamp_post: it.timestamp,\n    transcricao: it.transcricao,\n    language_code: 'pt',\n    audio_duration_ms: (it.videoDuration || 0) * 1000,\n    trilha: it.trilha,\n    etapa_funil: it.etapa_funil,\n    tipo_estrategico: it.tipo_estrategico,\n    objetivo: it.objetivo,\n    quando_usar: it.quando_usar,\n    por_que_funciona: it.por_que_funciona,\n    como_adaptar: it.como_adaptar,\n    quality_score: it.quality_score,\n    origem: 'pipeline_semanal',\n    top_player_perfil: it.ownerUsername,\n  };\n});\nreturn [{json: {p_items: items}}];"
       },
       "id": "build-payload",
       "name": "Monta payload inbox",
@@ -157,8 +180,9 @@
     "Apify scraper": {"main": [[{"node": "Filtro bruto", "type": "main", "index": 0}]]},
     "Filtro bruto": {"main": [[{"node": "Whisper (localhost VPS)", "type": "main", "index": 0}]]},
     "Whisper (localhost VPS)": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
-    "Merge Apify+Whisper": {"main": [[{"node": "Classificador LLM", "type": "main", "index": 0}]]},
-    "Classificador LLM": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
+    "Merge Apify+Whisper": {"main": [[{"node": "Classificador (Anthropic)", "type": "main", "index": 0}]]},
+    "Classificador (Anthropic)": {"main": [[{"node": "Parse classificacao", "type": "main", "index": 0}]]},
+    "Parse classificacao": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
     "Monta payload inbox": {"main": [[{"node": "POST inbox_submit", "type": "main", "index": 0}]]},
     "POST inbox_submit": {"main": [[{"node": "Log final", "type": "main", "index": 0}]]}
   },
