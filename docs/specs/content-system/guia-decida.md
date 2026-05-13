@@ -29,7 +29,7 @@ DECIDA não é um passo a passo. É um **mapa**. Você vai navegar pelos três g
 
 ## 2. Os três grupos
 
-### Grupo 1 — Descoberta + Engajamento (D+E)
+### Grupo 1 — Descoberta + Entendimento (D+E)
 
 **Propósito**: ser encontrada por quem ainda não te conhece. Conteúdo que atrai, prende, conecta.
 
@@ -70,9 +70,9 @@ A pergunta que mais aparece: **"Quanto de cada eu posto?"**
 
 A regra prática da Queila é a seguinte:
 
-- **70% Descoberta + Engajamento** — a maior parte do que você publica.
+- **60% Descoberta + Entendimento** — a maior parte do que você publica.
 - **30% Confiança + Identificação + Desejo** — uma fatia consistente, sem exagero.
-- **0 a 10% Ação** — quase nada em períodos normais; sobe pra ~10% quando você está em fase de abertura/vendas.
+- **10% Ação** — base contínua; sobe um pouco em fase de abertura/vendas.
 
 Por que essa proporção? Porque **conteúdo que só vende cansa, conteúdo que só ensina não converte, e conteúdo que só conecta não constrói marca**. Os três grupos se sustentam mutuamente.
 
@@ -95,7 +95,7 @@ Se você está em fase de vendas (turma aberta, lançamento, agenda com vagas), 
 Quando você for planejar a próxima semana de conteúdo:
 
 1. **Defina a fase**: estou em rotina ou em janela de vendas?
-2. **Distribua os grupos** segundo o mix (70/30/10 ou 60/30/10 com janela de vendas).
+2. **Distribua os grupos** segundo o mix (60/30/10 padrão; em janela de vendas o A sobe).
 3. **Para cada peça**, abra o banco em `/trilhas`, filtre pela etapa correta, leia o "Guia de uso" da referência mais próxima da sua ideia.
 4. **Adapte, não copie**. O "como adaptar" do card te dá o caminho.
 

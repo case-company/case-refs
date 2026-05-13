@@ -42,7 +42,7 @@ A spec é **prescritiva**: o que vai ser construído. Decisões com trade-offs f
 |   /trilhas           → 75+ itens curados (estáticos + promovidos)   |
 |   /posts             → posts fixados + destaques                    |
 |   /live              → cadastros pendentes (badge ⏳)               |
-|   /como-usar         → guia cliente (DECIDA + mix 70/30/0-10)       |
+|   /como-usar         → guia cliente (DECIDA + mix 60/30/10)         |
 |   /dashboard         → curadoria (escondido da landing)             |
 |                                                                     |
 |   Stack: HTML estático + JS vanilla + fetch direto Supabase         |
@@ -265,7 +265,7 @@ Aplicadas em prod via Dashboard SQL Editor (não via `supabase db push` devido a
 
 | Arquivo | Conteúdo |
 |---|---|
-| `como-usar.html` | Página pública DECIDA — 7 seções (o que é, 3 grupos, mix 70/30/10, navegação, campos editoriais, erros comuns, atalhos) |
+| `como-usar.html` | Página pública DECIDA — 7 seções (o que é, 3 grupos, mix 60/30/10, navegação, campos editoriais, erros comuns, atalhos) |
 
 ### 6.3 Componentes JS reutilizáveis (vanilla, sem build)
 

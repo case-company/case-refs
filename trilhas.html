@@ -133,9 +133,9 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
     <input type="search" class="input input-search" id="q" placeholder="Buscar por categoria, formato, ângulo, perfil...">
     <select class="select" id="etapa">
       <option value="">Todas as etapas</option>
-      <option value="DESCOBERTA" title="Descoberta · Engajamento (70%)">Descoberta</option>
+      <option value="DESCOBERTA" title="Descoberta · Entendimento (60%)">Descoberta</option>
       <option value="CONFIANCA" title="Confiança · Identificação · Desejo (30%)">C+I+D</option>
-      <option value="ACAO" title="Ação · Decisão (10%)">Ação</option>
+      <option value="ACAO" title="Ação (10%)">Ação</option>
     </select>
     <select class="select" id="formato"><option value="">Todos formatos</option></select>
     <button class="btn" id="reset">Limpar</button>
@@ -347,9 +347,9 @@ const ETAPA_LABEL = {
   ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label) || 'Ação',
 };
 const ETAPA_LABEL_LONG = {
-  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label_long) || 'Descoberta · Engajamento',
+  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label_long) || 'Descoberta · Entendimento',
   CONFIANCA: (window.DECIDA_MAP && window.DECIDA_MAP.CONFIANCA.label_long) || 'Confiança · Identificação · Desejo',
-  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label_long) || 'Ação · Decisão',
+  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label_long) || 'Ação',
 };
 const ETAPA_BADGE = {
   DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.badge_class) || 'badge-brand',

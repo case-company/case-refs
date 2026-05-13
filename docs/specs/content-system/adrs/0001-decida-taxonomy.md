@@ -20,9 +20,9 @@ Os 3 blocos:
 
 | Bloco       | Significado                              | Mix padrão do ciclo |
 |-------------|------------------------------------------|---------------------|
-| **D + E**   | Descoberta + Entendimento                | 70%                 |
+| **D + E**   | Descoberta + Entendimento                | 60%                 |
 | **C + I + D** | Confiança + Identificação + Desejo     | 30%                 |
-| **A**       | Ação / Decisão                           | 0–10% (fase vendas) |
+| **A**       | Ação                                     | 10% (sobe em fase de vendas) |
 
 O schema atual de `agente.referencias_conteudo` já tem a coluna `etapa_funil ∈ {DESCOBERTA, CONFIANCA, ACAO}`, definida quando o `refs.casein.com.br` foi montado. Os 3 valores **batem 1:1** com os 3 blocos do DECIDA:
 
@@ -43,7 +43,7 @@ Concretamente:
    - `DESCOBERTA` → exibe "**D+E**" (cor azul `#3b82f6`)
    - `CONFIANCA`  → exibe "**C+I+D**" (cor roxa `#8b5cf6`)
    - `ACAO`       → exibe "**A**" (cor vermelha `#ef4444`)
-3. **Documentação**: `/como-usar.html` explica o que cada bloco significa e a regra de mix 70/30/0-10 (em D+E padrão; em fase de vendas, A sobe pra 10%).
+3. **Documentação**: `/como-usar.html` explica o que cada bloco significa e a regra de mix 60/30/10 (em D+E padrão; em fase de vendas, A sobe pra 10%).
 4. **View SQL utilitária** (`v_etapa_label`) pra ser consumida por relatórios e exports — mapeia `etapa_funil` → `etapa_label`. View, não generated column, pra evitar reescrever a tabela.
 
 ## Consequences
@@ -69,7 +69,7 @@ Concretamente:
 
 ### Neutras
 
-- A regra de mix 70/30/0-10 não vira constraint de banco — é diretriz editorial validada no Agente 01 (Estrategista) e renderizada como hint no `/dashboard`.
+- A regra de mix 60/30/10 não vira constraint de banco — é diretriz editorial validada no Agente 01 (Estrategista) e renderizada como hint no `/dashboard`.
 
 ## Alternatives Considered
 

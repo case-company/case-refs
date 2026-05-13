@@ -65,7 +65,6 @@ SECURITY DEFINER
 SET search_path = public, agente
 AS $$
 DECLARE
-  v_ip_hash TEXT;
 BEGIN
   IF p_categoria NOT IN ('confuso','sugestao','erro','elogio') THEN
     RAISE EXCEPTION 'invalid_categoria: %', p_categoria USING ERRCODE = 'check_violation';
@@ -77,9 +76,9 @@ BEGIN
     RAISE EXCEPTION 'mensagem_muito_curta: minimo 10 caracteres' USING ERRCODE = 'check_violation';
   END IF;
 
-  -- Hash do IP (nunca armazenamos o IP cru)
-  v_ip_hash := CASE WHEN p_ip IS NULL OR p_ip = '' THEN NULL
-                    ELSE encode(digest(p_ip, 'sha256'), 'hex') END;
+  -- p_ip ignorado nesta versao (pgcrypto nao habilitado no projeto).
+  -- Pra ativar hash do IP futuramente: CREATE EXTENSION pgcrypto;
+  -- + voltar o branch CASE com encode(digest(p_ip,'sha256'),'hex').
 
   RETURN QUERY
   INSERT INTO agente.feedback_clientes
@@ -88,7 +87,7 @@ BEGIN
     (p_categoria, trim(p_pagina), p_contexto, trim(p_mensagem),
      nullif(trim(coalesce(p_email, '')), ''),
      nullif(trim(coalesce(p_user_agent, '')), ''),
-     v_ip_hash)
+     NULL)
   RETURNING id, created_at;
 END;
 $$;
@@ -97,4 +96,4 @@ GRANT EXECUTE ON FUNCTION public.case_refs_feedback_submit(TEXT,TEXT,TEXT,JSONB,
   TO anon, authenticated;
 
 COMMENT ON FUNCTION public.case_refs_feedback_submit IS
-  'Receber feedback do cliente sem login. ip_hash em SHA-256, nunca IP cru. Mensagem minima 10 chars.';
+  'Receber feedback do cliente sem login. Mensagem minima 10 chars. p_ip atualmente ignorado (pgcrypto nao habilitado).';

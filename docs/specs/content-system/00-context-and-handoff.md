@@ -68,7 +68,7 @@ Estrutura de **objetivos editoriais** organizada em 3 blocos:
 
 **Insight**: o schema atual já tem `etapa_funil ∈ {DESCOBERTA, CONFIANCA, ACAO}` — bate com o método. Só falta:
 1. Renomear/relabel `CONFIANCA` → `C+I+D` (Confiança+Identificação+Desejo)
-2. Documentar a regra de mix (70/30/0-10) no guia de uso
+2. Documentar a regra de mix (60/30/10) no guia de uso
 
 **Fonte canônica do método DECIDA**: material consolidado da Queila (texto curto que descreve os 3 grupos e a regra de mix).
 

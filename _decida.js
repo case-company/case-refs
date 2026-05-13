@@ -16,10 +16,10 @@
     DESCOBERTA: {
       enum_value: 'DESCOBERTA',
       label: 'Descoberta',
-      label_long: 'Descoberta · Engajamento',
+      label_long: 'Descoberta · Entendimento',
       letras: 'D+E',
-      percentual_recomendado: 70,
-      descricao_curta: 'Conteúdo que atrai e conecta — topo do funil, audiência fria.',
+      percentual_recomendado: 60,
+      descricao_curta: 'Conteúdo que atrai e faz a audiência entender quem você é e que problema você resolve.',
       badge_class: 'badge-brand',
     },
     CONFIANCA: {
@@ -28,16 +28,16 @@
       label_long: 'Confiança · Identificação · Desejo',
       letras: 'C+I+D',
       percentual_recomendado: 30,
-      descricao_curta: 'Conteúdo que aprofunda — autoridade, prova social, identificação.',
+      descricao_curta: 'Conteúdo que aprofunda — autoridade, prova social, identificação, desejo.',
       badge_class: 'badge-accent',
     },
     ACAO: {
       enum_value: 'ACAO',
       label: 'Ação',
-      label_long: 'Ação · Decisão',
+      label_long: 'Ação',
       letras: 'A',
       percentual_recomendado: 10,
-      descricao_curta: 'Conteúdo que converte — oferta, CTA direto, fechamento.',
+      descricao_curta: 'Conteúdo que pede decisão e próximo passo concreto.',
       badge_class: 'badge-warning',
     },
   };

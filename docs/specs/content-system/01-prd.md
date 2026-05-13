@@ -113,7 +113,7 @@ Invariantes editoriais e técnicas. Cada princípio tem **razão**. Decisões de
 
 **Razão**: o schema atual já tem `etapa_funil ∈ {DESCOBERTA, CONFIANCA, ACAO}`. O método DECIDA da Queila bate quase 1:1 (D+E / C+I+D / A). Manter duas taxonomias paralelas (formato + funil + DECIDA) confunde curador e cliente.
 
-**Implicação**: relabel `CONFIANCA` → "C+I+D" no front. Documentar regra de mix (70/30/0-10) no guia de uso. Nada de criar coluna nova.
+**Implicação**: relabel `CONFIANCA` → "C+I+D" no front. Documentar regra de mix (60/30/10) no guia de uso. Nada de criar coluna nova.
 
 ### P4 — O cliente CASE é o público primário do front, não o curador interno
 
@@ -184,7 +184,7 @@ Regra principal do handoff: **API entra para acelerar a operação. Não para de
 - Conteúdo:
   - O que é o `refs.casein.com.br` (1 parágrafo, sem jargão)
   - Como funciona a taxonomia DECIDA (D+E / C+I+D / A) com exemplos visuais
-  - Regra de mix 70/30/0-10 explicada
+  - Regra de mix 60/30/10 explicada
   - Como ler uma referência (quando usar / por que funciona / como adaptar)
   - Como rodar os 4 agentes (sequência + dependências)
   - FAQ (5-10 perguntas)
@@ -415,9 +415,9 @@ Trade-offs feitos conscientemente em V1. Documentados pra que futura-Queila/futu
 ## Anexo B — Glossário
 
 - **DECIDA**: método editorial da Queila organizado em 3 blocos (D+E / C+I+D / A). Não é acrônimo letra-por-letra.
-- **D+E**: Descoberta + Entendimento (~70% do mix editorial padrão).
+- **D+E**: Descoberta + Entendimento (~60% do mix editorial padrão).
 - **C+I+D**: Confiança + Identificação + Desejo (~30% do mix).
-- **A**: Ação / Decisão (0-10%, ramp em fase de vendas).
+- **A**: Ação (~10%, sobe em fase de vendas).
 - **Trilha**: separação por vertical de cliente CASE (CLINIC para clínicas; SCALE para mentorias/consultorias/infoprodutos). Aparece como "Clínica" / "Mentoria" no front.
 - **Promover**: ação de mover uma referência do estado pendente (`/live`) pro banco curado (`/trilhas`).
 

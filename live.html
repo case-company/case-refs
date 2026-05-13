@@ -111,7 +111,7 @@ html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:v
   <div class="toolbar">
     <input type="search" class="input input-search" id="q" placeholder="Buscar perfil, caption, transcrição...">
     <select class="select" id="trilha"><option value="">Todas trilhas</option><option value="clinic">Clínica</option><option value="scale">Mentoria</option></select>
-    <select class="select" id="etapa"><option value="">Todas etapas</option><option value="DESCOBERTA" title="Descoberta · Engajamento (70%)">Descoberta</option><option value="CONFIANCA" title="Confiança · Identificação · Desejo (30%)">C+I+D</option><option value="ACAO" title="Ação · Decisão (10%)">Ação</option></select>
+    <select class="select" id="etapa"><option value="">Todas etapas</option><option value="DESCOBERTA" title="Descoberta · Entendimento (60%)">Descoberta</option><option value="CONFIANCA" title="Confiança · Identificação · Desejo (30%)">C+I+D</option><option value="ACAO" title="Ação (10%)">Ação</option></select>
     <select class="select" id="periodo"><option value="">Qualquer data</option><option value="1h">Última hora</option><option value="24h">Últimas 24h</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="custom">Personalizado…</option></select>
     <input type="date" class="input" id="dateFrom" style="display:none;max-width:140px">
     <input type="date" class="input" id="dateTo" style="display:none;max-width:140px">
@@ -153,9 +153,9 @@ const ETAPA_LABEL = {
   ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label) || 'Ação',
 };
 const ETAPA_LABEL_LONG = {
-  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label_long) || 'Descoberta · Engajamento',
+  DESCOBERTA: (window.DECIDA_MAP && window.DECIDA_MAP.DESCOBERTA.label_long) || 'Descoberta · Entendimento',
   CONFIANCA: (window.DECIDA_MAP && window.DECIDA_MAP.CONFIANCA.label_long) || 'Confiança · Identificação · Desejo',
-  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label_long) || 'Ação · Decisão',
+  ACAO: (window.DECIDA_MAP && window.DECIDA_MAP.ACAO.label_long) || 'Ação',
 };
 
 let DATA = [];
