@@ -1,5 +1,9 @@
 # Whisper server na Hetzner (VPS do n8n)
 
+> **Status 2026-05-13: JÁ INSTALADO e rodando** em `root@5.161.181.233:/opt/whisper-server/` com systemd `whisper-server.service`. Health: `http://127.0.0.1:9999/health` na VPS, `http://172.18.0.1:9999/health` de dentro dos containers n8n. Smoke test PASS — 69s de áudio transcrito em 41s.
+
+Doc abaixo é referência se precisar reinstalar do zero.
+
 Instalação 1-vez. Depois fica subindo no boot.
 
 ## 1. SSH na VPS

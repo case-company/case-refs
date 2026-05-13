@@ -75,7 +75,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:9999/transcribe",
+        "url": "http://172.18.0.1:9999/transcribe",
         "sendBody": true,
         "bodyContentType": "json",
         "jsonBody": "={\"url\":\"{{$json.videoUrl || $json.audioUrl}}\",\"language\":\"pt\",\"model\":\"small\"}",
