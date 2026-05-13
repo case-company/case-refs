@@ -39,7 +39,6 @@ BEGIN
            likes             = COALESCE((v_item->>'likes')::INT, likes),
            comments          = COALESCE((v_item->>'comments')::INT, comments),
            views             = COALESCE((v_item->>'views')::INT, views),
-           audio_url         = COALESCE(nullif(v_item->>'audio_url', ''), audio_url),
            timestamp_post    = COALESCE((v_item->>'timestamp_post')::TIMESTAMPTZ, timestamp_post)
      WHERE shortcode = v_shortcode
        AND deleted_at IS NULL;
