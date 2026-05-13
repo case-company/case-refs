@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="/_auth.js"></script>
+<script src="/_decida.js"></script>
+<title>Inbox — Aprovação Editorial</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
+:root{--brand-700:#554d33;--brand-900:#35301d;--accent-500:#d4703a;--accent-700:#964627;--cream-50:#faf9f7;--cream-100:#f5f4f0;--cream-300:#e6e3da;--cream-700:#807a67;--neutral-200:#e5e3dc;--neutral-800:#2e2b25;--success:#4a8c5c;--warning:#c4942a;--danger:#c0392b;--font-display:"Optima","Times New Roman",serif;--font-ui:"Open Sauce Sans",system-ui,sans-serif;--shadow-xs:0 1px 2px rgba(85,77,51,.06);--shadow-sm:0 1px 3px rgba(85,77,51,.1);--shadow-lg:0 12px 24px rgba(85,77,51,.12);--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;font-family:var(--font-ui);background:var(--cream-50);color:var(--neutral-800);line-height:1.5}
+.back-bar{max-width:1200px;margin:0 auto;padding:24px 24px 0;display:flex;gap:12px;flex-wrap:wrap}
+.back-home{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;font-size:.8rem;font-weight:600;color:var(--cream-700);text-decoration:none;background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-md);box-shadow:var(--shadow-xs)}
+.back-home:hover{color:var(--brand-700);border-color:var(--brand-700);transform:translateX(-2px)}
+.container{max-width:1200px;margin:0 auto;padding:32px 24px}
+h1.page-title{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--brand-700);margin:0 0 4px}
+p.page-sub{margin:0 0 24px;color:var(--cream-700);font-size:.95rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-lg);padding:14px}
+.stat .val{font-family:var(--font-display);font-size:1.6rem;font-weight:700;color:var(--brand-700)}
+.stat .lbl{font-size:.72rem;color:var(--cream-700);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.chip{padding:6px 12px;border-radius:99px;background:white;border:1px solid var(--neutral-200);font-size:.8rem;cursor:pointer;color:var(--brand-700);font-weight:600;font-family:inherit}
+.chip.active{background:var(--brand-700);color:white;border-color:var(--brand-700)}
+.list{display:flex;flex-direction:column;gap:16px}
+.row{background:white;border:1px solid var(--neutral-200);border-radius:var(--radius-xl);padding:18px;display:grid;grid-template-columns:160px 1fr 200px;gap:16px}
+@media(max-width:880px){.row{grid-template-columns:1fr}}
+.row .thumb{aspect-ratio:1;background:var(--cream-100) center/cover no-repeat;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--cream-500);font-size:.8rem}
+.row .body{display:flex;flex-direction:column;gap:8px;min-width:0}
+.row .head{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{padding:3px 9px;font-size:.65rem;font-weight:700;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.badge-q{background:var(--brand-700);color:white}
+.badge-trilha{background:var(--cream-100);color:var(--brand-700);border:1px solid var(--cream-300)}
+.badge-etapa-DESCOBERTA{background:#dbeafe;color:#1e40af}
+.badge-etapa-CONFIANCA{background:#ede9fe;color:#6d28d9}
+.badge-etapa-ACAO{background:#fee2e2;color:#b91c1c}
+.badge-linha{background:#fef3c7;color:#92400e}
+.row .perfil{font-weight:600;color:var(--brand-700);font-size:.9rem}
+.row .caption{color:var(--cream-700);font-size:.82rem;max-height:3em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.guide{background:var(--cream-50);border-radius:var(--radius-md);padding:10px;border-left:3px solid var(--accent-500);display:flex;flex-direction:column;gap:6px}
+.guide-row{font-size:.78rem;line-height:1.4;display:flex;gap:8px}
+.guide-label{flex-shrink:0;font-weight:700;color:var(--brand-700);text-transform:uppercase;letter-spacing:.04em;font-size:.65rem;width:60px;padding-top:1px}
+.guide-text{flex:1;color:var(--neutral-800)}
+.actions{display:flex;flex-direction:column;gap:8px}
+.btn{font-family:inherit;cursor:pointer;padding:10px 16px;border-radius:var(--radius-md);font-weight:600;font-size:.82rem;border:1px solid;transition:all .15s}
+.btn-approve{background:var(--success);color:white;border-color:var(--success)}
+.btn-approve:hover{filter:brightness(.95)}
+.btn-edit{background:white;color:var(--brand-700);border-color:var(--neutral-200)}
+.btn-edit:hover{border-color:var(--brand-700)}
+.btn-reject{background:white;color:var(--danger);border-color:var(--danger)}
+.btn-reject:hover{background:#fce8e6}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row.processing{opacity:.5;pointer-events:none}
+.empty{padding:48px;text-align:center;color:var(--cream-700);font-style:italic;background:white;border-radius:var(--radius-lg);border:1px dashed var(--cream-300)}
+.row .metrics{font-size:.7rem;color:var(--cream-700);display:flex;gap:8px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--brand-700);color:white;padding:10px 18px;border-radius:99px;font-size:.85rem;opacity:0;transition:opacity .2s;z-index:9999}
+.toast.show{opacity:1}
+.toast.err{background:var(--danger)}
+</style>
+</head><body>
+<div class="back-bar">
+  <a class="back-home" href="/">← Banco</a>
+  <a class="back-home" href="/trilhas">/trilhas</a>
+  <a class="back-home" href="/live">/live</a>
+  <a class="back-home" href="/dashboard">/dashboard</a>
+</div>
+<div class="container">
+  <h1 class="page-title">Inbox — Aprovação Editorial</h1>
+  <p class="page-sub">Refs que vieram do pipeline semanal automático. Aprove pra publicar em <code>/trilhas</code>, descarte pra remover, ou edite o Guia antes de aprovar.</p>
+
+  <div class="stats" id="stats"><div class="empty">Carregando…</div></div>
+
+  <div class="filters">
+    <button class="chip active" data-trilha="">Todas trilhas</button>
+    <button class="chip" data-trilha="clinic">Clínica</button>
+    <button class="chip" data-trilha="scale">Mentoria</button>
+    <span style="margin:0 8px;color:var(--cream-300)">·</span>
+    <button class="chip active" data-etapa="">Todas etapas</button>
+    <button class="chip" data-etapa="DESCOBERTA">D+E</button>
+    <button class="chip" data-etapa="CONFIANCA">C+I+D</button>
+    <button class="chip" data-etapa="ACAO">A</button>
+  </div>
+
+  <div class="list" id="list"><div class="empty">Carregando…</div></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://knusqfbvhsqworzyhvip.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo";
+
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtNum(n){return (n||0).toLocaleString('pt-BR');}
+
+let ALL = [];
+let filterTrilha = '';
+let filterEtapa = '';
+
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind === 'err' ? ' err' : '');
+  setTimeout(()=>t.className='toast', 2500);
+}
+
+async function load(){
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/v_referencias_inbox?select=*&limit=500`;
+    const r = await fetch(url, {headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    ALL = await r.json();
+    render();
+  } catch(e){
+    document.getElementById('list').innerHTML = `<div class="empty">Erro: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function render(){
+  const rows = ALL.filter(r =>
+    (!filterTrilha || r.trilha === filterTrilha) &&
+    (!filterEtapa || r.etapa_funil === filterEtapa)
+  );
+
+  // Stats
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="val">${ALL.length}</div><div class="lbl">No inbox</div></div>
+    <div class="stat"><div class="val">${ALL.filter(r=>r.trilha==='clinic').length}</div><div class="lbl">Clínica</div></div>
+    <div class="stat"><div class="val">${ALL.filter(r=>r.trilha==='scale').length}</div><div class="lbl">Mentoria</div></div>
+    <div class="stat"><div class="val">${ALL.length ? Math.round(ALL.reduce((s,r)=>s+(r.quality_score||0),0)/ALL.length) : 0}</div><div class="lbl">Qualidade média</div></div>
+  `;
+
+  if (!rows.length){
+    document.getElementById('list').innerHTML = `<div class="empty">Nenhum item ${filterTrilha||filterEtapa?'neste filtro':'no inbox'}.</div>`;
+    return;
+  }
+
+  const decida = (e) => window.decidaLabel ? window.decidaLabel(e) : e;
+  document.getElementById('list').innerHTML = rows.map(r => `
+    <div class="row" data-id="${r.id}">
+      <div class="thumb" ${r.thumb_url?`style="background-image:url('${r.thumb_url}')"`:''}>${r.thumb_url?'':'sem prévia'}</div>
+      <div class="body">
+        <div class="head">
+          <span class="badge badge-q">⭐ ${r.quality_score||0}</span>
+          ${r.trilha?`<span class="badge badge-trilha">${r.trilha==='clinic'?'Clínica':'Mentoria'}</span>`:''}
+          ${r.etapa_funil?`<span class="badge badge-etapa-${r.etapa_funil}">${decida(r.etapa_funil)}</span>`:''}
+          ${r.tipo_estrategico?`<span class="badge badge-linha">${escapeHtml(r.tipo_estrategico)}</span>`:''}
+        </div>
+        <div class="perfil">@${escapeHtml(r.perfil||'desconhecido')} ${r.top_player_perfil?'· top player':''}</div>
+        <div class="metrics">
+          ${r.likes?`♥ ${fmtNum(r.likes)}`:''}
+          ${r.comments?` · 💬 ${fmtNum(r.comments)}`:''}
+          ${r.views?` · ▶ ${fmtNum(r.views)}`:''}
+          ${r.audio_duration_ms?` · ⏱ ${Math.round(r.audio_duration_ms/1000)}s`:''}
+        </div>
+        ${r.caption?`<div class="caption">${escapeHtml(r.caption)}</div>`:''}
+        ${(r.quando_usar||r.por_que_funciona||r.como_adaptar) ? `
+        <div class="guide">
+          ${r.quando_usar?`<div class="guide-row"><span class="guide-label">Quando</span><span class="guide-text">${escapeHtml(r.quando_usar)}</span></div>`:''}
+          ${r.por_que_funciona?`<div class="guide-row"><span class="guide-label">Por que</span><span class="guide-text">${escapeHtml(r.por_que_funciona)}</span></div>`:''}
+          ${r.como_adaptar?`<div class="guide-row"><span class="guide-label">Como</span><span class="guide-text">${escapeHtml(r.como_adaptar)}</span></div>`:''}
+        </div>`:''}
+        ${r.url?`<a href="${r.url}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--accent-500);font-weight:600;text-decoration:none">Abrir no Instagram →</a>`:''}
+      </div>
+      <div class="actions">
+        <button class="btn btn-approve" onclick="approve(${r.id})">✓ Aprovar</button>
+        <button class="btn btn-edit" onclick="editGuide(${r.id})">Editar guia</button>
+        <button class="btn btn-reject" onclick="reject(${r.id})">✗ Descartar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function approve(id){
+  const row = document.querySelector(`.row[data-id="${id}"]`);
+  if (row) row.classList.add('processing');
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/case_refs_inbox_approve`, {
+      method:'POST',
+      headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'},
+      body: JSON.stringify({p_id: id})
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Aprovado ✓ — apareceu em /trilhas');
+    ALL = ALL.filter(x => x.id !== id);
+    render();
+  } catch(e){
+    if (row) row.classList.remove('processing');
+    toast('Erro: '+e.message, 'err');
+  }
+}
+
+async function reject(id){
+  const motivo = prompt('Motivo do descarte (opcional):');
+  if (motivo === null) return; // cancelou
+  const row = document.querySelector(`.row[data-id="${id}"]`);
+  if (row) row.classList.add('processing');
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/case_refs_inbox_reject`, {
+      method:'POST',
+      headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'},
+      body: JSON.stringify({p_id: id, p_motivo: motivo || null})
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Descartado');
+    ALL = ALL.filter(x => x.id !== id);
+    render();
+  } catch(e){
+    if (row) row.classList.remove('processing');
+    toast('Erro: '+e.message, 'err');
+  }
+}
+
+async function editGuide(id){
+  const ref = ALL.find(r => r.id === id);
+  if (!ref) return;
+  const qu = prompt('Quando usar:', ref.quando_usar||'');
+  if (qu === null) return;
+  const pf = prompt('Por que funciona:', ref.por_que_funciona||'');
+  if (pf === null) return;
+  const ca = prompt('Como adaptar:', ref.como_adaptar||'');
+  if (ca === null) return;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/case_refs_set_editorial_batch`, {
+      method:'POST',
+      headers:{apikey:SUPABASE_ANON,Authorization:'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'},
+      body: JSON.stringify({p_items: [{id, quando_usar: qu, por_que_funciona: pf, como_adaptar: ca}]})
+    });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('Guia atualizado');
+    ref.quando_usar = qu; ref.por_que_funciona = pf; ref.como_adaptar = ca;
+    render();
+  } catch(e){
+    toast('Erro: '+e.message, 'err');
+  }
+}
+
+document.querySelectorAll('.chip[data-trilha]').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.chip[data-trilha]').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  filterTrilha = c.dataset.trilha;
+  render();
+}));
+document.querySelectorAll('.chip[data-etapa]').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.chip[data-etapa]').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  filterEtapa = c.dataset.etapa;
+  render();
+}));
+
+load();
+</script>
+</body></html>

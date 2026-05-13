@@ -1,0 +1,172 @@
+{
+  "name": "case-refs · pipeline retroalimentacao semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {"field": "cronExpression", "expression": "0 6 * * 0"}
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Domingo 06:00 BRT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_top_players_seed",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE}}"},
+            {"name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE}}"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\"p_limit\":30,\"p_min_score\":80}"
+      },
+      "id": "seed-list",
+      "name": "Seed: top 30 perfis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta directUrls Apify a partir dos perfis seed\nconst rows = $input.first().json;\nconst urls = rows.map(r => `https://www.instagram.com/${r.perfil}/`);\nreturn [{json: {directUrls: urls, resultsType: 'posts', resultsLimit: 10, addParentData: false}}];"
+      },
+      "id": "build-apify-input",
+      "name": "Monta input Apify",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items?token={{$env.APIFY_TOKEN}}&timeout=600",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{$json}}"
+      },
+      "id": "apify-scrape",
+      "name": "Apify scraper",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtros brutos (passo 3 da spec): dedup local, idade, engajamento, keyword\nconst items = $input.first().json;\nconst KEYWORDS_CLINIC = ['clinica','clínica','consultorio','consultório','paciente','medico','médico','dermatologia','estetica','estética','harmonizacao','harmonização','lifting','botox','pele','tratamento','procedimento','dentista','odonto','cirurgiao','cirurgião'];\nconst KEYWORDS_SCALE  = ['mentoria','mentorada','empreendedor','ticket','agenda','vendas','oferta','posicionamento','autoridade','lancamento','lançamento','conteudo','conteúdo','instagram','negocio','negócio','escala','faturamento'];\nconst now = Date.now();\nconst ANO_MS = 365*24*60*60*1000;\n\nconst survivors = [];\nfor (const it of items) {\n  if (!it.shortCode) continue;\n  // idade\n  const ts = it.timestamp ? Date.parse(it.timestamp) : null;\n  if (ts && (now - ts) > ANO_MS) continue;\n  // engajamento\n  const likes = it.likesCount || 0;\n  const views = it.videoViewCount || it.videoPlayCount || 0;\n  if (likes < 500 && views < 10000) continue;\n  // match trilha\n  const text = ((it.ownerUsername||'') + ' ' + (it.caption||'').slice(0,500)).toLowerCase();\n  const clinic = KEYWORDS_CLINIC.some(k => text.includes(k));\n  const scale  = KEYWORDS_SCALE.some(k => text.includes(k));\n  if (!clinic && !scale) continue;\n  survivors.push(it);\n}\nreturn survivors.map(s => ({json: s}));"
+      },
+      "id": "filter-bruto",
+      "name": "Filtro bruto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.WHISPER_LOCAL_URL || 'http://100.102.33.48:9999/transcribe'}}",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\"url\":\"{{$json.videoUrl || $json.audioUrl}}\",\"language\":\"pt\",\"model\":\"small\"}",
+        "options": {"timeout": 300000, "response": {"response": {"neverError": true}}}
+      },
+      "id": "whisper-local",
+      "name": "Whisper local",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta Apify item + transcricao + chama Claude classificador via Execute Command\nconst all = $input.all();\nreturn all.map(n => {\n  const item = n.json.item || n.json;\n  const trans = n.json.text || '';\n  return {json: {...item, transcricao: trans}};\n});"
+      },
+      "id": "merge-apify-whisper",
+      "name": "Merge Apify+Whisper",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "command": "=cat <<'EOF' | python3 /Users/kaiquerodrigues/Downloads/case-references/scripts/classificador_llm.py\n{{JSON.stringify($json)}}\nEOF"
+      },
+      "id": "classificador-llm",
+      "name": "Classificador LLM",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta items pro RPC inbox_submit\nconst items = $input.all().map(n => {\n  const item = n.json.item || n.json;\n  const cls = typeof n.json.stdout === 'string' ? JSON.parse(n.json.stdout) : n.json;\n  return {\n    shortcode: item.shortCode,\n    url: `https://www.instagram.com/p/${item.shortCode}/`,\n    perfil: item.ownerUsername,\n    tipo_artefato: item.type === 'Video' ? 'reel' : 'publicacao_avulsa',\n    plataforma: 'instagram',\n    caption: item.caption,\n    display_url: item.displayUrl,\n    video_url: item.videoUrl,\n    cover_url: item.displayUrl,\n    likes: item.likesCount,\n    comments: item.commentsCount,\n    views: item.videoViewCount || item.videoPlayCount,\n    timestamp_post: item.timestamp,\n    transcricao: item.transcricao,\n    language_code: 'pt',\n    audio_duration_ms: (item.videoDuration || 0) * 1000,\n    trilha: cls.trilha,\n    etapa_funil: cls.etapa_funil,\n    tipo_estrategico: cls.tipo_estrategico,\n    objetivo: cls.objetivo,\n    quando_usar: cls.quando_usar,\n    por_que_funciona: cls.por_que_funciona,\n    como_adaptar: cls.como_adaptar,\n    quality_score: cls.quality_score,\n    origem: 'pipeline_semanal',\n    top_player_perfil: item.ownerUsername,\n  };\n});\nreturn [{json: {p_items: items}}];"
+      },
+      "id": "build-payload",
+      "name": "Monta payload inbox",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_inbox_submit",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE}}"},
+            {"name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE}}"},
+            {"name": "Content-Type", "value": "application/json"}
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{JSON.stringify($json)}}"
+      },
+      "id": "submit-inbox",
+      "name": "POST inbox_submit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{$env.TELEGRAM_BOT_TOKEN}}/sendMessage",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\"chat_id\":\"{{$env.TELEGRAM_CHAT_ID}}\",\"text\":\"📥 Pipeline semanal: {{$json[0].inserted_count}} refs novas em /inbox-admin · {{$json[0].rejected_count}} rejeitadas\",\"parse_mode\":\"Markdown\"}"
+      },
+      "id": "notify-telegram",
+      "name": "Telegram Queila",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2440, 300]
+    }
+  ],
+  "connections": {
+    "Domingo 06:00 BRT": {"main": [[{"node": "Seed: top 30 perfis", "type": "main", "index": 0}]]},
+    "Seed: top 30 perfis": {"main": [[{"node": "Monta input Apify", "type": "main", "index": 0}]]},
+    "Monta input Apify": {"main": [[{"node": "Apify scraper", "type": "main", "index": 0}]]},
+    "Apify scraper": {"main": [[{"node": "Filtro bruto", "type": "main", "index": 0}]]},
+    "Filtro bruto": {"main": [[{"node": "Whisper local", "type": "main", "index": 0}]]},
+    "Whisper local": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
+    "Merge Apify+Whisper": {"main": [[{"node": "Classificador LLM", "type": "main", "index": 0}]]},
+    "Classificador LLM": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
+    "Monta payload inbox": {"main": [[{"node": "POST inbox_submit", "type": "main", "index": 0}]]},
+    "POST inbox_submit": {"main": [[{"node": "Telegram Queila", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "active": false,
+  "tags": []
+}
