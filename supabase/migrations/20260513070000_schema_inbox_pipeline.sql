@@ -87,7 +87,9 @@ CREATE VIEW public.v_referencias_inbox AS
   SELECT
     id, perfil, trilha, tipo_artefato, plataforma, status, top_player_perfil,
     quality_score, auto_classified,
-    url, shortcode, caption, thumb_url, video_url,
+    url, shortcode, caption,
+    COALESCE(cover_url, display_url) AS thumb_url,
+    video_url,
     likes, comments, views, audio_duration_ms,
     transcricao, language_code,
     tipo_estrategico, etapa_funil, objetivo,
