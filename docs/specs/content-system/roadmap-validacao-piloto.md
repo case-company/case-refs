@@ -31,7 +31,7 @@ Ordem importa: as tarefas vão da mais simples à mais complexa. Cada tarefa tem
 
 ### Tarefa 1 — Entrar no banco e entender o que é
 
-- **Pra quem**: clientes 1 e 2.
+- **Pra quem**: Mariza.
 - **Setup**: abrir `refs.casein.com.br` direto, sem briefing prévio.
 - **Critério PASS**: em ≤ 60 segundos a pessoa consegue dizer "isso aqui é um banco de referências de conteúdo organizado pelo método da Queila".
 - **Critério FAIL**: precisa de explicação verbal ou desiste por confusão.
@@ -39,7 +39,7 @@ Ordem importa: as tarefas vão da mais simples à mais complexa. Cada tarefa tem
 
 ### Tarefa 2 — Ler o guia DECIDA
 
-- **Pra quem**: cliente 1 (visita nova).
+- **Pra quem**: Mariza.
 - **Setup**: abrir `/como-usar`.
 - **Critério PASS**: ao fim da leitura (~5 min), conseguir explicar com palavras próprias o que é cada um dos 3 grupos (D+E / C+I+D / A) e qual a regra de mix.
 - **Critério FAIL**: não consegue diferenciar D+E de C+I+D ou esquece A.
@@ -47,23 +47,22 @@ Ordem importa: as tarefas vão da mais simples à mais complexa. Cada tarefa tem
 
 ### Tarefa 3 — Filtrar e encontrar uma referência útil
 
-- **Pra quem**: cliente 2 (consulta recorrente).
+- **Pra quem**: Mariza.
 - **Setup**: instrução: "Você precisa postar conteúdo na fase C+I+D essa semana. Use o banco pra escolher uma referência."
 - **Critério PASS**: encontra ≥ 2 candidatas em ≤ 3 min usando o filtro de etapa.
 - **Critério FAIL**: clica em qualquer card aleatório sem usar o filtro.
 - **Sinal de fricção**: não percebe o `<select>` de etapa. Reclama do label "C+I+D".
 
-### Tarefa 4 — Promover um item (Queila)
+### Tarefa 4 — (Não se aplica neste piloto)
 
-- **Pra quem**: Queila.
-- **Setup**: abrir `/live`, escolher 1 item pendente.
+Pular — Mariza não vai promover refs (Queila já fez via XLSX). Avaliar separadamente com Queila se quiser testar o fluxo `/live` em produção real.
 - **Critério PASS**: preenche os 3 campos editoriais com texto significativo (>= 20 chars cada), promove sem erro, item aparece em `/trilhas` com o "Guia de uso" visível.
 - **Critério FAIL**: deixa um dos campos genérico ("post legal"), reclama do modal, ou desiste.
 - **Sinal de fricção**: tempo > 5 min pra preencher. Cola placeholder sem editar.
 
 ### Tarefa 5 — Enviar feedback
 
-- **Pra quem**: clientes 1 e 2.
+- **Pra quem**: Mariza.
 - **Setup**: ao fim da sessão, pedir: "Diga 1 coisa que você melhoraria no site."
 - **Critério PASS**: encontra o botão "Feedback" no canto inferior direito e envia categorizado.
 - **Critério FAIL**: precisa do meu apontamento pra ver o botão.
