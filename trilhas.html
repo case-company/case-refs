@@ -402,8 +402,27 @@ async function loadPromoted() {
     const rows = await r.json();
     const adapted = rows.map(adaptPromoted);
     // dedup por shortcode (caso item promovido já estivesse no DATA estático)
-    const existingShortcodes = new Set(DATA.filter(d => d.shortcode).map(d => d.shortcode));
-    const newOnes = adapted.filter(a => a.shortcode && !existingShortcodes.has(a.shortcode));
+    // Merge: refs do banco ENRIQUECEM as estáticas com os mesmos shortcodes
+    // (campos editoriais + transcricao + caption + thumb_url do Apify).
+    // Refs novas (não-presentes nos estáticos) entram como antes.
+    const ENRICH_FIELDS = ['quando_usar','por_que_funciona','como_adaptar','objetivo',
+                            'thumb_url','perfil_origem','likes','comments','views'];
+    const dataByShortcode = new Map(DATA.filter(d => d.shortcode).map(d => [d.shortcode, d]));
+    const newOnes = [];
+    for (const a of adapted) {
+      if (!a.shortcode) continue;
+      const existing = dataByShortcode.get(a.shortcode);
+      if (existing) {
+        // Enriquece in-place (não cria duplicata)
+        for (const f of ENRICH_FIELDS) {
+          if (a[f] && (!existing[f] || existing[f] === '' || existing[f] === 0)) {
+            existing[f] = a[f];
+          }
+        }
+      } else {
+        newOnes.push(a);
+      }
+    }
     DATA.push(...newOnes);
     if (newOnes.length) {
       // re-popula select de formato
