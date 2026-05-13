@@ -100,29 +100,30 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.anthropic.com/v1/messages",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {"name": "x-api-key", "value": "={{$env.ANTHROPIC_API_KEY}}"},
-            {"name": "anthropic-version", "value": "2023-06-01"},
-            {"name": "content-type", "value": "application/json"}
+            {"name": "Authorization", "value": "=Bearer {{$env.OPENROUTER_API_KEY}}"},
+            {"name": "Content-Type", "value": "application/json"},
+            {"name": "HTTP-Referer", "value": "https://refs.casein.com.br"},
+            {"name": "X-Title", "value": "case-refs pipeline"}
           ]
         },
         "sendBody": true,
         "bodyContentType": "json",
-        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"system\": \"Voce e curador editorial seguindo o metodo DECIDA da Queila Trizotti (Case). Classifica 1 referencia de conteudo do Instagram. Responde APENAS JSON puro sem markdown.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"DADOS:\\nPerfil: @{{$json.ownerUsername || 'desconhecido'}}\\nCaption: {{($json.caption || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 2000)}}\\nTranscricao: {{($json.transcricao || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 3000)}}\\nLikes: {{$json.likesCount || 0}} / Views: {{$json.videoViewCount || $json.videoPlayCount || 0}}\\nDuracao: {{$json.videoDuration || 0}}s\\n\\nCLASSIFIQUE em JSON puro:\\n{\\n  \\\"trilha\\\": \\\"clinic\\\" OU \\\"scale\\\",\\n  \\\"etapa_funil\\\": \\\"DESCOBERTA\\\" OU \\\"CONFIANCA\\\" OU \\\"ACAO\\\",\\n  \\\"tipo_estrategico\\\": UMA das 10 linhas: \\\"Alerta de Erro, Perda ou Risco\\\" | \\\"Ganho, Solucao ou Caminho\\\" | \\\"Contrassenso / Quebra de Crenca\\\" | \\\"Comparacao / Contraste\\\" | \\\"CIS / Identificacao\\\" | \\\"Historia / Curiosidade / Experiencia\\\" | \\\"Prova / Case / Autoridade\\\" | \\\"Mecanismo / Metodo / Causa Real\\\" | \\\"Analise / Decodificacao\\\" | \\\"Objecao / Decisao / Acao\\\",\\n  \\\"objetivo\\\": \\\"Atrair\\\" | \\\"Identificar\\\" | \\\"Desejo\\\" | \\\"Confiar\\\" | \\\"Vender\\\",\\n  \\\"quando_usar\\\": frase 30-180 chars: quando no calendario usar,\\n  \\\"por_que_funciona\\\": frase 40-200 chars: mecanica editorial concreta,\\n  \\\"como_adaptar\\\": frase 40-220 chars: caminho pratico cliente CASE,\\n  \\\"quality_score\\\": 0-100 inteiro\\n}\\n\\nREGRAS:\\n- DECIDA mix 60% D+E / 30% C+I+D / 10% A\\n- pt-BR tom consultivo\\n- Zero anglicismos\\n- Zero ROI/semanas/garantia\\n- Sem prosa antes/depois do JSON\\n\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"anthropic/claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"response_format\": {\"type\": \"json_object\"},\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Voce e curador editorial seguindo o metodo DECIDA da Queila Trizotti (Case). Classifica 1 referencia de conteudo do Instagram. Responde APENAS JSON puro, sem markdown, sem prosa.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"DADOS:\\nPerfil: @{{$json.ownerUsername || 'desconhecido'}}\\nCaption: {{($json.caption || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 2000)}}\\nTranscricao: {{($json.transcricao || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 3000)}}\\nLikes: {{$json.likesCount || 0}} / Views: {{$json.videoViewCount || $json.videoPlayCount || 0}}\\nDuracao: {{$json.videoDuration || 0}}s\\n\\nDevolva JSON com EXATAMENTE estes campos:\\n{\\n  \\\"trilha\\\": \\\"clinic\\\" OU \\\"scale\\\",\\n  \\\"etapa_funil\\\": \\\"DESCOBERTA\\\" OU \\\"CONFIANCA\\\" OU \\\"ACAO\\\",\\n  \\\"tipo_estrategico\\\": UMA das 10 linhas: \\\"Alerta de Erro, Perda ou Risco\\\" | \\\"Ganho, Solucao ou Caminho\\\" | \\\"Contrassenso / Quebra de Crenca\\\" | \\\"Comparacao / Contraste\\\" | \\\"CIS / Identificacao\\\" | \\\"Historia / Curiosidade / Experiencia\\\" | \\\"Prova / Case / Autoridade\\\" | \\\"Mecanismo / Metodo / Causa Real\\\" | \\\"Analise / Decodificacao\\\" | \\\"Objecao / Decisao / Acao\\\",\\n  \\\"objetivo\\\": \\\"Atrair\\\" | \\\"Identificar\\\" | \\\"Desejo\\\" | \\\"Confiar\\\" | \\\"Vender\\\",\\n  \\\"quando_usar\\\": frase 30-180 chars,\\n  \\\"por_que_funciona\\\": frase 40-200 chars,\\n  \\\"como_adaptar\\\": frase 40-220 chars,\\n  \\\"quality_score\\\": 0-100 inteiro\\n}\\n\\nREGRAS:\\n- DECIDA mix 60% D+E / 30% C+I+D / 10% A\\n- pt-BR tom consultivo\\n- Zero anglicismos (sem framework/pipeline/ICP/B2B)\\n- Zero ROI/semanas/garantia\"\n    }\n  ]\n}",
         "options": {"timeout": 60000}
       },
       "id": "classificador-llm",
-      "name": "Classificador (Anthropic)",
+      "name": "Classificador (OpenRouter)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [1780, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Extrai JSON do response Anthropic e funde com o item original\nconst itemOriginal = $('Merge Apify+Whisper').item.json;\nconst resp = $input.first().json;\nconst raw = resp.content?.[0]?.text || '';\nlet cls = {};\ntry {\n  let s = raw.trim();\n  if (s.startsWith('```')) { s = s.split('```')[1]; if (s.startsWith('json')) s = s.slice(4); }\n  const m = s.match(/\\{[\\s\\S]*\\}/);\n  if (m) cls = JSON.parse(m[0]);\n} catch (e) { console.error('parse failed', e, raw); }\nreturn [{json: {...itemOriginal, ...cls}}];"
+        "jsCode": "// Extrai JSON do response OpenRouter (formato OpenAI) e funde com o item original\nconst itemOriginal = $('Merge Apify+Whisper').item.json;\nconst resp = $input.first().json;\nconst raw = resp.choices?.[0]?.message?.content || '';\nlet cls = {};\ntry {\n  let s = raw.trim();\n  if (s.startsWith('```')) { s = s.split('```')[1]; if (s.startsWith('json')) s = s.slice(4); }\n  const m = s.match(/\\{[\\s\\S]*\\}/);\n  if (m) cls = JSON.parse(m[0]);\n} catch (e) { console.error('parse failed', e, raw); }\nreturn [{json: {...itemOriginal, ...cls}}];"
       },
       "id": "parse-classificacao",
       "name": "Parse classificacao",
@@ -180,8 +181,8 @@
     "Apify scraper": {"main": [[{"node": "Filtro bruto", "type": "main", "index": 0}]]},
     "Filtro bruto": {"main": [[{"node": "Whisper (localhost VPS)", "type": "main", "index": 0}]]},
     "Whisper (localhost VPS)": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
-    "Merge Apify+Whisper": {"main": [[{"node": "Classificador (Anthropic)", "type": "main", "index": 0}]]},
-    "Classificador (Anthropic)": {"main": [[{"node": "Parse classificacao", "type": "main", "index": 0}]]},
+    "Merge Apify+Whisper": {"main": [[{"node": "Classificador (OpenRouter)", "type": "main", "index": 0}]]},
+    "Classificador (OpenRouter)": {"main": [[{"node": "Parse classificacao", "type": "main", "index": 0}]]},
     "Parse classificacao": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
     "Monta payload inbox": {"main": [[{"node": "POST inbox_submit", "type": "main", "index": 0}]]},
     "POST inbox_submit": {"main": [[{"node": "Log final", "type": "main", "index": 0}]]}
