@@ -21,6 +21,8 @@ Documentação do projeto que assume o handoff do Felipe Gobbi e absorve a taxon
 | [02-spec-tech.md](02-spec-tech.md) | spec técnica | Arquitetura, schema, APIs, fluxos, migrations, RLS, observabilidade. |
 | [guia-decida.md](guia-decida.md) | guia cliente | O método DECIDA explicado para cliente. Versão markdown longa. |
 | [fase-2-monitoramento-apis.md](fase-2-monitoramento-apis.md) | backlog | Planejamento explícito da fase 2 (automação + APIs) — pedido direto do handoff. |
+| [migracao-sheets-queila.md](migracao-sheets-queila.md) | migration-plan | Plano de import do Sheets ativo da Queila — pedido direto do handoff. |
+| [roadmap-validacao-piloto.md](roadmap-validacao-piloto.md) | roadmap | Protocolo de validação com cliente real (Queila + 2 piloto). |
 | [CHANGELOG.md](CHANGELOG.md) | changelog | Histórico de releases. |
 
 ## ADRs (decisões arquiteturais)
@@ -42,8 +44,14 @@ Documentação do projeto que assume o handoff do Felipe Gobbi e absorve a taxon
 | [E02](epics/E02-curadoria-editorial.md) | P0 | **Done** | 6 |
 | [E03](epics/E03-onboarding-cliente.md) | P0 | **Done** | 4 |
 | [E08](epics/E08-validacao-e-rollout.md) | P0 | **Done** | 1 |
+| [E09](epics/E09-pendencias-handoff-felipe.md) | P1 | in-progress | 3 |
 
 > Epics E04-E07 (4 agentes editoriais) foram removidos — fora do escopo do handoff. Ver CHANGELOG.
+
+**E09 — pendências do handoff pós V1.0.0**:
+- **E09-S1** (feedback dos clientes) — código deployed, backend SQL pendente
+- **E09-S2** (migração Sheets Queila) — bloqueado aguardando export CSV
+- **E09-S3** (validação com cliente real) — protocolo pronto, depende de agenda humana
 
 ## Stories
 
