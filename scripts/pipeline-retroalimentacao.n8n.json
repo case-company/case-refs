@@ -5,7 +5,10 @@
       "parameters": {
         "rule": {
           "interval": [
-            {"field": "cronExpression", "expression": "0 6 * * 0"}
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * 0"
+            }
           ]
         }
       },
@@ -13,30 +16,25 @@
       "name": "Domingo 06:00 BRT",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_top_players_seed",
-        "authentication": "none",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {"name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE}}"},
-            {"name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE}}"},
-            {"name": "Content-Type", "value": "application/json"}
-          ]
-        },
-        "sendBody": true,
-        "bodyContentType": "json",
-        "jsonBody": "={\"p_limit\":30,\"p_min_score\":80}"
+        "operation": "executeQuery",
+        "query": "SELECT perfil, refs_count, max_score, trilha FROM public.case_refs_top_players_seed(30, 60);",
+        "options": {}
       },
       "id": "seed-list",
-      "name": "Seed: top 30 perfis",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [460, 300]
+      "name": "Seed (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
@@ -46,7 +44,10 @@
       "name": "Monta input Apify",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
@@ -54,13 +55,18 @@
         "url": "=https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items?token={{$env.APIFY_TOKEN}}&timeout=600",
         "sendBody": true,
         "bodyContentType": "json",
-        "jsonBody": "={{$json}}"
+        "jsonBody": "={{$json}}",
+        "specifyBody": "json",
+        "contentType": "json"
       },
       "id": "apify-scrape",
       "name": "Apify scraper",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [900, 300]
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
@@ -70,7 +76,10 @@
       "name": "Filtro bruto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 300]
+      "position": [
+        1120,
+        300
+      ]
     },
     {
       "parameters": {
@@ -79,13 +88,25 @@
         "sendBody": true,
         "bodyContentType": "json",
         "jsonBody": "={\"url\":\"{{$json.videoUrl || $json.audioUrl}}\",\"language\":\"pt\",\"model\":\"small\"}",
-        "options": {"timeout": 300000, "response": {"response": {"neverError": true}}}
+        "options": {
+          "timeout": 300000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        },
+        "specifyBody": "json",
+        "contentType": "json"
       },
       "id": "whisper-local",
       "name": "Whisper (localhost VPS)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1340, 300]
+      "position": [
+        1340,
+        300
+      ]
     },
     {
       "parameters": {
@@ -95,7 +116,10 @@
       "name": "Merge Apify+Whisper",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 300]
+      "position": [
+        1560,
+        300
+      ]
     },
     {
       "parameters": {
@@ -104,22 +128,42 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {"name": "Authorization", "value": "=Bearer {{$env.OPENROUTER_API_KEY}}"},
-            {"name": "Content-Type", "value": "application/json"},
-            {"name": "HTTP-Referer", "value": "https://refs.casein.com.br"},
-            {"name": "X-Title", "value": "case-refs pipeline"}
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENROUTER_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://refs.casein.com.br"
+            },
+            {
+              "name": "X-Title",
+              "value": "case-refs pipeline"
+            }
           ]
         },
         "sendBody": true,
         "bodyContentType": "json",
         "jsonBody": "={\n  \"model\": \"anthropic/claude-sonnet-4-6\",\n  \"max_tokens\": 800,\n  \"response_format\": {\"type\": \"json_object\"},\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Voce e curador editorial seguindo o metodo DECIDA da Queila Trizotti (Case). Classifica 1 referencia de conteudo do Instagram. Responde APENAS JSON puro, sem markdown, sem prosa.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"DADOS:\\nPerfil: @{{$json.ownerUsername || 'desconhecido'}}\\nCaption: {{($json.caption || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 2000)}}\\nTranscricao: {{($json.transcricao || '').replace(/\\\"/g, '\\\\\\\"').substring(0, 3000)}}\\nLikes: {{$json.likesCount || 0}} / Views: {{$json.videoViewCount || $json.videoPlayCount || 0}}\\nDuracao: {{$json.videoDuration || 0}}s\\n\\nDevolva JSON com EXATAMENTE estes campos:\\n{\\n  \\\"trilha\\\": \\\"clinic\\\" OU \\\"scale\\\",\\n  \\\"etapa_funil\\\": \\\"DESCOBERTA\\\" OU \\\"CONFIANCA\\\" OU \\\"ACAO\\\",\\n  \\\"tipo_estrategico\\\": UMA das 10 linhas: \\\"Alerta de Erro, Perda ou Risco\\\" | \\\"Ganho, Solucao ou Caminho\\\" | \\\"Contrassenso / Quebra de Crenca\\\" | \\\"Comparacao / Contraste\\\" | \\\"CIS / Identificacao\\\" | \\\"Historia / Curiosidade / Experiencia\\\" | \\\"Prova / Case / Autoridade\\\" | \\\"Mecanismo / Metodo / Causa Real\\\" | \\\"Analise / Decodificacao\\\" | \\\"Objecao / Decisao / Acao\\\",\\n  \\\"objetivo\\\": \\\"Atrair\\\" | \\\"Identificar\\\" | \\\"Desejo\\\" | \\\"Confiar\\\" | \\\"Vender\\\",\\n  \\\"quando_usar\\\": frase 30-180 chars,\\n  \\\"por_que_funciona\\\": frase 40-200 chars,\\n  \\\"como_adaptar\\\": frase 40-220 chars,\\n  \\\"quality_score\\\": 0-100 inteiro\\n}\\n\\nREGRAS:\\n- DECIDA mix 60% D+E / 30% C+I+D / 10% A\\n- pt-BR tom consultivo\\n- Zero anglicismos (sem framework/pipeline/ICP/B2B)\\n- Zero ROI/semanas/garantia\"\n    }\n  ]\n}",
-        "options": {"timeout": 60000}
+        "options": {
+          "timeout": 60000
+        },
+        "specifyBody": "json",
+        "specifyHeaders": "keypair",
+        "contentType": "json"
       },
       "id": "classificador-llm",
       "name": "Classificador (OpenRouter)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [1780, 300]
+      "position": [
+        1780,
+        300
+      ]
     },
     {
       "parameters": {
@@ -129,7 +173,10 @@
       "name": "Parse classificacao",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1890, 300]
+      "position": [
+        1890,
+        300
+      ]
     },
     {
       "parameters": {
@@ -139,55 +186,168 @@
       "name": "Monta payload inbox",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 300]
+      "position": [
+        2000,
+        300
+      ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://knusqfbvhsqworzyhvip.supabase.co/rest/v1/rpc/case_refs_inbox_submit",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {"name": "apikey", "value": "={{$env.SUPABASE_SERVICE_ROLE}}"},
-            {"name": "Authorization", "value": "=Bearer {{$env.SUPABASE_SERVICE_ROLE}}"},
-            {"name": "Content-Type", "value": "application/json"}
-          ]
-        },
-        "sendBody": true,
-        "bodyContentType": "json",
-        "jsonBody": "={{JSON.stringify($json)}}"
+        "operation": "executeQuery",
+        "query": "SELECT inserted_count, rejected_count, rejected_reasons FROM public.case_refs_inbox_submit($1::jsonb);",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify($json.p_items) }}"
+        }
       },
       "id": "submit-inbox",
-      "name": "POST inbox_submit",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [2220, 300]
+      "name": "Inbox submit (Postgres)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2220,
+        300
+      ]
     },
     {
       "parameters": {
-        "jsCode": "// Log final do run (n8n executions já mostra historico).\n// Sem notificacao externa — Queila abre /inbox-admin quando quiser.\nconst r = $input.first().json;\nreturn [{json: {\n  inserted: r[0]?.inserted_count || 0,\n  rejected: r[0]?.rejected_count || 0,\n  rejected_reasons: r[0]?.rejected_reasons || [],\n  ran_at: new Date().toISOString()\n}}];"
+        "jsCode": "// Postgres node devolve a row direto (sem array)\nconst r = $input.first().json;\nreturn [{json: {\n  inserted: r.inserted_count || 0,\n  rejected: r.rejected_count || 0,\n  rejected_reasons: r.rejected_reasons || [],\n  ran_at: new Date().toISOString()\n}}];"
       },
       "id": "log-final",
       "name": "Log final",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2440, 300]
+      "position": [
+        2440,
+        300
+      ]
     }
   ],
   "connections": {
-    "Domingo 06:00 BRT": {"main": [[{"node": "Seed: top 30 perfis", "type": "main", "index": 0}]]},
-    "Seed: top 30 perfis": {"main": [[{"node": "Monta input Apify", "type": "main", "index": 0}]]},
-    "Monta input Apify": {"main": [[{"node": "Apify scraper", "type": "main", "index": 0}]]},
-    "Apify scraper": {"main": [[{"node": "Filtro bruto", "type": "main", "index": 0}]]},
-    "Filtro bruto": {"main": [[{"node": "Whisper (localhost VPS)", "type": "main", "index": 0}]]},
-    "Whisper (localhost VPS)": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
-    "Merge Apify+Whisper": {"main": [[{"node": "Classificador (OpenRouter)", "type": "main", "index": 0}]]},
-    "Classificador (OpenRouter)": {"main": [[{"node": "Parse classificacao", "type": "main", "index": 0}]]},
-    "Parse classificacao": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
-    "Monta payload inbox": {"main": [[{"node": "POST inbox_submit", "type": "main", "index": 0}]]},
-    "POST inbox_submit": {"main": [[{"node": "Log final", "type": "main", "index": 0}]]}
+    "Domingo 06:00 BRT": {
+      "main": [
+        [
+          {
+            "node": "Seed (Postgres)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta input Apify": {
+      "main": [
+        [
+          {
+            "node": "Apify scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify scraper": {
+      "main": [
+        [
+          {
+            "node": "Filtro bruto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro bruto": {
+      "main": [
+        [
+          {
+            "node": "Whisper (localhost VPS)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Whisper (localhost VPS)": {
+      "main": [
+        [
+          {
+            "node": "Merge Apify+Whisper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Apify+Whisper": {
+      "main": [
+        [
+          {
+            "node": "Classificador (OpenRouter)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classificador (OpenRouter)": {
+      "main": [
+        [
+          {
+            "node": "Parse classificacao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse classificacao": {
+      "main": [
+        [
+          {
+            "node": "Monta payload inbox",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Monta payload inbox": {
+      "main": [
+        [
+          {
+            "node": "Inbox submit (Postgres)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inbox submit (Postgres)": {
+      "main": [
+        [
+          {
+            "node": "Log final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed (Postgres)": {
+      "main": [
+        [
+          {
+            "node": "Monta input Apify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": {"executionOrder": "v1"},
+  "settings": {
+    "executionOrder": "v1"
+  },
   "active": false,
   "tags": []
 }
