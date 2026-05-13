@@ -43,6 +43,10 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
 .card-title{font-family:var(--font-ui);font-size:var(--text-sm);font-weight:600;color:var(--neutral-800);margin:0;line-height:1.35}
 .card-meta{font-size:var(--text-xs);color:var(--cream-700);display:flex;flex-wrap:wrap;gap:var(--sp-1)}
 .card-caption{font-size:var(--text-xs);color:var(--neutral-600);line-height:1.4;max-height:4.2em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.card-guide{display:flex;flex-direction:column;gap:var(--sp-1);padding:var(--sp-2);background:var(--cream-50);border-radius:var(--radius-md);border-left:3px solid var(--accent-300);margin-top:var(--sp-1)}
+.card-guide-row{display:flex;gap:var(--sp-2);align-items:flex-start;font-size:var(--text-xs);line-height:1.4}
+.card-guide-label{flex-shrink:0;font-weight:700;color:var(--brand-700);text-transform:uppercase;letter-spacing:.04em;font-size:var(--text-2xs);width:54px;padding-top:1px}
+.card-guide-text{flex:1;color:var(--neutral-800);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:var(--sp-2);border-top:1px solid var(--neutral-100);font-size:var(--text-xs)}
 .card-link{display:inline-flex;align-items:center;gap:var(--sp-1);font-weight:600;color:var(--accent-500);text-decoration:none}
 .card-link:hover{color:var(--accent-700)}
@@ -486,6 +490,12 @@ function render() {
                 <span class="badge badge-cream">${escapeHtml(r.formato)}</span>
                 ${r.perfil_origem ? `<span class="badge badge-neutral">@${escapeHtml(r.perfil_origem)}</span>` : ''}
               </div>
+              ${(r.quando_usar || r.por_que_funciona || r.como_adaptar) ? `
+              <div class="card-guide">
+                ${r.quando_usar ? `<div class="card-guide-row"><span class="card-guide-label">Quando</span><span class="card-guide-text">${escapeHtml(r.quando_usar)}</span></div>` : ''}
+                ${r.por_que_funciona ? `<div class="card-guide-row"><span class="card-guide-label">Por que</span><span class="card-guide-text">${escapeHtml(r.por_que_funciona)}</span></div>` : ''}
+                ${r.como_adaptar ? `<div class="card-guide-row"><span class="card-guide-label">Como</span><span class="card-guide-text">${escapeHtml(r.como_adaptar)}</span></div>` : ''}
+              </div>` : ''}
               <div class="card-foot">
                 <span>${[fmtNum(r.likes) ? '<span class="metric">♥ <strong>'+fmtNum(r.likes)+'</strong></span>' : '', fmtNum(r.comments) ? '<span class="metric">💬 <strong>'+fmtNum(r.comments)+'</strong></span>' : '', fmtNum(r.views) ? '<span class="metric">▶ <strong>'+fmtNum(r.views)+'</strong></span>' : ''].filter(x=>x).join(' ')}</span>
                 <a class="card-link" href="${r.link}" target="_blank" rel="noopener">Abrir no IG</a>
