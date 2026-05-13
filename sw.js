@@ -1,5 +1,8 @@
 // case-refs — Service Worker
-const CACHE_VERSION = 'v1';
+// v2 (2026-05-13): HTML/JS/CSS agora é network-first com fallback de cache.
+// Resolve bug de UI antiga aparecer após deploy.
+
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `case-refs-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   '/',
@@ -8,7 +11,10 @@ const STATIC_ASSETS = [
   '/posts',
   '/live',
   '/dashboard',
+  '/como-usar',
   '/_auth.js',
+  '/_decida.js',
+  '/_tour.js',
   '/manifest.json'
 ];
 
@@ -48,16 +54,14 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // HTML/JS/CSS: stale-while-revalidate
+  // HTML/JS/CSS: network-first (sempre busca rede; cache só como fallback offline)
   e.respondWith(
-    caches.open(CACHE_NAME).then(c =>
-      c.match(e.request).then(cached => {
-        const network = fetch(e.request).then(r => {
-          if (r.ok) c.put(e.request, r.clone());
-          return r;
-        }).catch(() => cached);
-        return cached || network;
-      })
-    )
+    fetch(e.request).then(r => {
+      if (r.ok) {
+        const copy = r.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, copy));
+      }
+      return r;
+    }).catch(() => caches.open(CACHE_NAME).then(c => c.match(e.request)))
   );
 });
