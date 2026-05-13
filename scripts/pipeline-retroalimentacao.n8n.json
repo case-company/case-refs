@@ -75,14 +75,14 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{$env.WHISPER_LOCAL_URL || 'http://100.102.33.48:9999/transcribe'}}",
+        "url": "http://127.0.0.1:9999/transcribe",
         "sendBody": true,
         "bodyContentType": "json",
         "jsonBody": "={\"url\":\"{{$json.videoUrl || $json.audioUrl}}\",\"language\":\"pt\",\"model\":\"small\"}",
         "options": {"timeout": 300000, "response": {"response": {"neverError": true}}}
       },
       "id": "whisper-local",
-      "name": "Whisper local",
+      "name": "Whisper (localhost VPS)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [1340, 300]
@@ -141,16 +141,12 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "=https://api.telegram.org/bot{{$env.TELEGRAM_BOT_TOKEN}}/sendMessage",
-        "sendBody": true,
-        "bodyContentType": "json",
-        "jsonBody": "={\"chat_id\":\"{{$env.TELEGRAM_CHAT_ID}}\",\"text\":\"📥 Pipeline semanal: {{$json[0].inserted_count}} refs novas em /inbox-admin · {{$json[0].rejected_count}} rejeitadas\",\"parse_mode\":\"Markdown\"}"
+        "jsCode": "// Log final do run (n8n executions já mostra historico).\n// Sem notificacao externa — Queila abre /inbox-admin quando quiser.\nconst r = $input.first().json;\nreturn [{json: {\n  inserted: r[0]?.inserted_count || 0,\n  rejected: r[0]?.rejected_count || 0,\n  rejected_reasons: r[0]?.rejected_reasons || [],\n  ran_at: new Date().toISOString()\n}}];"
       },
-      "id": "notify-telegram",
-      "name": "Telegram Queila",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
+      "id": "log-final",
+      "name": "Log final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [2440, 300]
     }
   ],
@@ -159,12 +155,12 @@
     "Seed: top 30 perfis": {"main": [[{"node": "Monta input Apify", "type": "main", "index": 0}]]},
     "Monta input Apify": {"main": [[{"node": "Apify scraper", "type": "main", "index": 0}]]},
     "Apify scraper": {"main": [[{"node": "Filtro bruto", "type": "main", "index": 0}]]},
-    "Filtro bruto": {"main": [[{"node": "Whisper local", "type": "main", "index": 0}]]},
-    "Whisper local": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
+    "Filtro bruto": {"main": [[{"node": "Whisper (localhost VPS)", "type": "main", "index": 0}]]},
+    "Whisper (localhost VPS)": {"main": [[{"node": "Merge Apify+Whisper", "type": "main", "index": 0}]]},
     "Merge Apify+Whisper": {"main": [[{"node": "Classificador LLM", "type": "main", "index": 0}]]},
     "Classificador LLM": {"main": [[{"node": "Monta payload inbox", "type": "main", "index": 0}]]},
     "Monta payload inbox": {"main": [[{"node": "POST inbox_submit", "type": "main", "index": 0}]]},
-    "POST inbox_submit": {"main": [[{"node": "Telegram Queila", "type": "main", "index": 0}]]}
+    "POST inbox_submit": {"main": [[{"node": "Log final", "type": "main", "index": 0}]]}
   },
   "settings": {"executionOrder": "v1"},
   "active": false,

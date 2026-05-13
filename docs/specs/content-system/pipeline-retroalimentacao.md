@@ -78,13 +78,7 @@ related:
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  7. NOTIFICAÇÃO — Telegram/email pra Queila:                        │
-│     "X novas refs no inbox (Y rejeitadas, ver /inbox-admin)"        │
-└─────────────────────────────────────────────────────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│  8. APROVAÇÃO HUMANA (Queila no /inbox-admin)                       │
+│  7. APROVAÇÃO HUMANA (Queila no /inbox-admin)                       │
 │     - Aprovar → status: 'inbox' → 'publicado' (sai pra /trilhas)    │
 │     - Descartar → status: 'descartado' (sai de tudo)                │
 │     - Editar Guia de uso antes de aprovar (opcional)                │
@@ -159,7 +153,7 @@ V2: descobre players novos via análise de quem aparece em mentions/colabs nas r
 | Item | Custo |
 |---|---|
 | Apify (30 perfis × 10 posts = 300 itens) | ~$0.45 (plan STARTER cobre) |
-| Whisper local | $0 (Mac mini ou MacBook) |
+| Whisper na Hetzner (CPU da VPS do n8n) | $0 (sem GPU, ~20-50min/semana de CPU) |
 | Claude API (300 classificações × 1500 tokens) | ~$1.50 (ou $0 se rodar via `claude -p` Max) |
 | n8n self-host | $0 |
 | **Total mensal** (4× = $7.80 ou $1.80) | < $10/mês |
@@ -173,10 +167,10 @@ Inclui:
 - Postgres node (seed list)
 - HTTP Request → Apify run-sync
 - Code node (filtros brutos)
-- HTTP Request → Whisper local (`http://100.102.33.48:9999/transcribe`)
-- HTTP Request → Claude classificador
+- HTTP Request → Whisper na própria VPS (`http://127.0.0.1:9999/transcribe`)
+- Execute Command → `classificador_llm.py` (chama Claude via subprocess)
 - HTTP Request → Supabase RPC `case_refs_inbox_submit`
-- HTTP Request → Telegram bot notif
+- Code node → log final do run (executions n8n ja arquivam — sem notificacao externa)
 
 ## 7. Variáveis de ambiente necessárias (n8n)
 
@@ -184,11 +178,9 @@ Inclui:
 APIFY_TOKEN=apify_api_...
 SUPABASE_URL=https://knusqfbvhsqworzyhvip.supabase.co
 SUPABASE_SERVICE_ROLE=eyJ...
-WHISPER_LOCAL_URL=http://100.102.33.48:9999/transcribe   (Tailscale)
-ANTHROPIC_API_KEY=sk-ant-... (opcional — se quiser Claude direto)
-TELEGRAM_BOT_TOKEN=... (opcional — pra notif)
-TELEGRAM_CHAT_ID=... (Queila)
 ```
+
+Whisper roda na própria VPS em `127.0.0.1:9999` — sem env var, sem token. Ver `scripts/whisper-server/install-hetzner.md` para setup do servidor (one-shot, ~10 min).
 
 ## 8. /inbox-admin (UI pra Queila aprovar)
 
