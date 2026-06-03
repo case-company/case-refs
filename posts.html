@@ -178,6 +178,15 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
         </select>
       </div>
       <div class="form-row">
+        <label>Destino (tipo de referência)</label>
+        <select id="f_destino_uni">
+          <option value="post_fixado">Post fixado (banco /posts)</option>
+          <option value="destaque">Destaque (banco /posts)</option>
+          <option value="trilha">Conteúdo de trilha (banco /trilhas)</option>
+        </select>
+        <div style="margin-top:4px;font-size:var(--text-2xs);color:var(--cream-700)">Define em qual banco a referência entra depois de promovida. Pra link de perfil, fixados + destaques são coletados automaticamente.</div>
+      </div>
+      <div class="form-row">
         <label>Notas (opcional)</label>
         <textarea id="f_notas_uni" placeholder="Por que essa referência? (opcional)"></textarea>
       </div>
@@ -227,6 +236,10 @@ async function addReference() {
     trilha: document.getElementById('f_trilha_uni').value,
     notas: document.getElementById('f_notas_uni').value || '',
     origem: 'manual_form',
+    // destino do cadastro: trilha (publicacao_avulsa) | post_fixado | destaque.
+    // O n8n usa isso pra gravar tipo_artefato — decide se a ref vai pro
+    // banco /trilhas ou pro banco /posts (fixados + destaques).
+    destino: document.getElementById('f_destino_uni').value || 'post_fixado',
     created_at: new Date().toISOString()
   });
   if (payload.type === 'perfil') {
@@ -274,6 +287,46 @@ const TIPO_BADGE_D = { 'Quem Sou':'badge-brand', 'Resultados':'badge-success', '
 
 let MODE = 'pinned';
 
+// === Enriquecimento via Supabase ===
+// PINNED/DESTAQUES são estáticos (snapshot do scrape). O banco
+// (agente.referencias_conteudo, tipo_artefato post_fixado|destaque) guarda o
+// que o reprocessamento gera: transcrição, guia de uso (metodologia Camada 1 /
+// Primeira Impressão) e thumb permanente no Storage (URLs do CDN do IG expiram).
+// Aqui a gente faz merge por shortcode (fixados) e highlight_id (destaques).
+const SUPABASE_URL = "https://knusqfbvhsqworzyhvip.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo";
+async function loadEnrichment() {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/v_referencias_publicas?select=*&tipo_artefato=in.(post_fixado,destaque)&limit=1000`;
+    const r = await fetch(url, { headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON } });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const rows = await r.json();
+    const FIELDS = ['transcricao','language_code','audio_duration_ms','quando_usar','por_que_funciona','como_adaptar','objetivo'];
+    const byShortcode = new Map(rows.filter(x => x.tipo_artefato === 'post_fixado' && x.shortcode).map(x => [x.shortcode, x]));
+    const byHighlight = new Map(rows.filter(x => x.tipo_artefato === 'destaque' && x.highlight_id).map(x => [x.highlight_id, x]));
+    const byPerfilTitulo = new Map(rows.filter(x => x.tipo_artefato === 'destaque' && x.perfil).map(x => [(x.perfil||'')+'|'+(x.resumo||''), x]));
+    let hits = 0;
+    PINNED.forEach(p => {
+      const db = byShortcode.get(p.shortcode);
+      if (!db) return;
+      hits++;
+      FIELDS.forEach(f => { if (db[f] && !p[f]) p[f] = db[f]; });
+      if (db.thumb_url) p.thumb_db = db.thumb_url;
+      if (db.tipo_estrategico && (!p.tipo_estrategico || p.tipo_estrategico === 'Indefinido')) p.tipo_estrategico = db.tipo_estrategico;
+    });
+    DESTAQUES.forEach(d => {
+      const db = byHighlight.get(d.highlight_id) || byPerfilTitulo.get((d.perfil||'')+'|'+(d.titulo||''));
+      if (!db) return;
+      hits++;
+      FIELDS.forEach(f => { if (db[f] && !d[f]) d[f] = db[f]; });
+      if (db.thumb_url) d.thumb_db = db.thumb_url;
+    });
+    if (hits) render();
+  } catch (e) {
+    console.warn('Falha ao enriquecer do banco:', e);
+  }
+}
+
 function escapeHtml(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtNum(n) { const x = parseInt(n||0); return x ? x.toLocaleString('pt-BR') : ''; }
 
@@ -311,7 +364,7 @@ function renderPinned(rows) {
     h += '<div class="grid">';
     items.forEach(r => {
       const conf = parseFloat(r.confidence||0);
-      const tsrc = r.thumb_local || r.displayUrl;
+      const tsrc = r.thumb_local || r.thumb_db || r.displayUrl;
       const thumbStyle = tsrc ? `background-image:url('${tsrc}')` : '';
       const thumbCls = tsrc ? '' : 'card-thumb-empty';
       const onClick = r.shortcode ? `onclick="openModal('${r.shortcode}','${r.trilha}','Posição ${r.posicao}','${r.tipo_estrategico}','${r.formato}','${escapeHtml(r.caption_preview).slice(0,80).replace(/'/g,"\\'")}','${r.perfil}','${r.url}')"` : '';
@@ -351,16 +404,22 @@ function renderDestaques(rows) {
     h += `<h2 class="section-h2"><span class="eyebrow">@</span>${p} <span class="badge ${m.trilha==='clinic'?'badge-success':'badge-accent'}">${m.trilha}</span> <span class="badge badge-cream">${oLab}</span> <span style="color:var(--cream-700);font-weight:400;font-family:var(--font-ui);font-size:var(--text-sm)">(${items.length} destaques)</span></h2>`;
     h += '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">';
     items.forEach(r => {
-      const tsrc = r.thumb_local || r.cover_url;
+      const tsrc = r.thumb_local || r.thumb_db || r.cover_url;
       const thumbStyle = tsrc ? `background-image:url('${tsrc}')` : '';
       const thumbCls = tsrc ? '' : 'card-thumb-empty';
       h += `<div class="card fade-in">
         <div class="card-thumb ${thumbCls}" style="${thumbStyle}">
-          ${!r.cover_url ? 'sem prévia' : ''}
+          ${!tsrc ? 'sem prévia' : ''}
         </div>
         <div class="card-body" style="padding:var(--sp-3)">
           <h4 class="card-title">${escapeHtml(r.titulo) || '<em style="color:var(--cream-700)">sem título</em>'}</h4>
           <span class="badge ${TIPO_BADGE_D[r.template_estrategico]||'badge-neutral'}">${r.template_estrategico}</span>
+          ${(r.quando_usar || r.por_que_funciona || r.como_adaptar) ? `
+          <div style="margin-top:var(--sp-2);font-size:var(--text-2xs);color:var(--neutral-800);display:flex;flex-direction:column;gap:4px">
+            ${r.quando_usar ? `<div><strong style="color:var(--brand-700)">Quando usar.</strong> ${escapeHtml(r.quando_usar)}</div>` : ''}
+            ${r.por_que_funciona ? `<div><strong style="color:var(--brand-700)">Por que funciona.</strong> ${escapeHtml(r.por_que_funciona)}</div>` : ''}
+            ${r.como_adaptar ? `<div><strong style="color:var(--brand-700)">Como adaptar.</strong> ${escapeHtml(r.como_adaptar)}</div>` : ''}
+          </div>` : ''}
         </div>
       </div>`;
     });
@@ -407,7 +466,9 @@ async function openModal(shortcode, trilha, posLabel, tipo, formato, captionShor
   const m = document.getElementById('modal');
   document.getElementById('modalTitle').textContent = `@${perfil} — ${posLabel}`;
   document.getElementById('modalPlayer').innerHTML = `<iframe src="https://www.instagram.com/p/${shortcode}/embed/captioned/" allow="encrypted-media" scrolling="no"></iframe>`;
-  document.getElementById('modalBody').innerHTML = `<div class="modal-meta">
+  // Registro completo (com enriquecimento do banco — guia de uso + transcrição)
+  const full = PINNED.find(d => d.shortcode === shortcode) || {};
+  let body = `<div class="modal-meta">
     <span class="badge badge-cream">${trilha}</span>
     <span class="badge badge-brand">${tipo}</span>
     <span class="badge badge-cream">${escapeHtml(formato)}</span>
@@ -415,26 +476,45 @@ async function openModal(shortcode, trilha, posLabel, tipo, formato, captionShor
   <div class="modal-section">
     <h4>Caption</h4>
     <div class="modal-caption">${escapeHtml(captionShort)}…</div>
-  </div>
-  <div class="modal-section">
+  </div>`;
+  const qu = (full.quando_usar || '').trim();
+  const pf = (full.por_que_funciona || '').trim();
+  const ca = (full.como_adaptar || '').trim();
+  if (qu || pf || ca) {
+    body += `<div class="modal-section">
+      <h4>Guia de uso</h4>
+      ${qu ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Quando usar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(qu)}</span></div>` : ''}
+      ${pf ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Por que funciona.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(pf)}</span></div>` : ''}
+      ${ca ? `<div><strong style="font-size:var(--text-xs);color:var(--brand-700)">Como adaptar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(ca)}</span></div>` : ''}
+    </div>`;
+  }
+  body += `<div class="modal-section">
     <h4>Transcrição</h4>
     <div id="transcriptBox" class="modal-transcript transcript-empty">carregando...</div>
   </div>`;
+  document.getElementById('modalBody').innerHTML = body;
   m.classList.add('open');
+  const box = document.getElementById('transcriptBox');
+  function showTranscript(text, lang, durMs) {
+    box.classList.remove('transcript-empty');
+    const l = lang ? `[${lang}] ` : '';
+    const d = durMs ? ` · ${Math.round(durMs/1000)}s` : '';
+    box.innerHTML = `<div style="font-size:var(--text-2xs);color:var(--cream-700);margin-bottom:var(--sp-2)">${l}${text.length} caracteres${d}</div>${escapeHtml(text)}`;
+  }
+  // 1º banco (reprocessamento), 2º objeto estático, 3º transcripts/*.json legado
+  if (full.transcricao) { showTranscript(full.transcricao, full.language_code, full.audio_duration_ms); return; }
+  const st = (typeof TRANSCRIPTS !== 'undefined') && TRANSCRIPTS[shortcode];
+  if (st && st.text) { showTranscript(st.text, st.language_code, (st.audio_duration||0)*1000); return; }
   try {
     const r = await fetch(`transcripts/${shortcode}.json`);
     if (r.ok) {
       const t = await r.json();
-      const box = document.getElementById('transcriptBox');
-      box.classList.remove('transcript-empty');
-      const lang = t.language_code ? `[${t.language_code}] ` : '';
-      const dur = t.audio_duration ? ` · ${Math.round(t.audio_duration)}s` : '';
-      box.innerHTML = `<div style="font-size:var(--text-2xs);color:var(--cream-700);margin-bottom:var(--sp-2)">${lang}${t.text ? t.text.length+' caracteres' : ''}${dur}</div>${escapeHtml(t.text || '(sem texto)')}`;
+      showTranscript(t.text || '(sem texto)', t.language_code, (t.audio_duration||0)*1000);
     } else {
-      document.getElementById('transcriptBox').textContent = 'Transcrição não disponível para este vídeo.';
+      box.textContent = 'Transcrição não disponível para este vídeo.';
     }
   } catch (e) {
-    document.getElementById('transcriptBox').textContent = 'Falha ao carregar transcrição.';
+    box.textContent = 'Transcrição não disponível para este vídeo.';
   }
 }
 function closeModal() {
@@ -444,5 +524,6 @@ function closeModal() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 refreshTipos(); render();
+loadEnrichment();
 </script>
 </body></html>

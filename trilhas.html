@@ -193,6 +193,15 @@ html,body{margin:0;padding:0;font-family:var(--font-ui);background:var(--cream-5
         </select>
       </div>
       <div class="form-row">
+        <label>Destino (tipo de referência)</label>
+        <select id="f_destino_uni">
+          <option value="trilha">Conteúdo de trilha (banco /trilhas)</option>
+          <option value="post_fixado">Post fixado (banco /posts)</option>
+          <option value="destaque">Destaque (banco /posts)</option>
+        </select>
+        <div style="margin-top:4px;font-size:var(--text-2xs);color:var(--cream-700)">Define em qual banco a referência entra depois de promovida. Pra link de perfil, fixados + destaques são coletados automaticamente.</div>
+      </div>
+      <div class="form-row">
         <label>Notas (opcional)</label>
         <textarea id="f_notas_uni" placeholder="Por que essa referência? (opcional)"></textarea>
       </div>
@@ -249,10 +258,14 @@ function updateBulkPreview() {
   el.innerHTML = `<strong>${valid}</strong> link(s) válido(s)` + (invalid ? ` · <span style="color:var(--danger)">${invalid} inválido(s) (serão ignorados)</span>` : '');
 }
 
-function buildPayload(parsed, trilha, notas) {
+function buildPayload(parsed, trilha, notas, destino) {
   const payload = Object.assign({}, parsed, {
     trilha, notas: notas || '',
     origem: 'manual_form',
+    // destino do cadastro: trilha (publicacao_avulsa) | post_fixado | destaque.
+    // O n8n usa isso pra gravar tipo_artefato — decide se a ref vai pro
+    // banco /trilhas ou pro banco /posts (fixados + destaques).
+    destino: destino || 'trilha',
     created_at: new Date().toISOString()
   });
   if (payload.type === 'perfil') {
@@ -279,6 +292,7 @@ function trackPending(payload) {
 async function addReference() {
   const isBulk = document.getElementById('f_bulkMode').checked;
   const trilha = document.getElementById('f_trilha_uni').value;
+  const destino = document.getElementById('f_destino_uni').value;
   const notas = document.getElementById('f_notas_uni').value || '';
   const btn = document.getElementById('btnAdd');
   const orig = btn.textContent;
@@ -292,7 +306,7 @@ async function addReference() {
     let ok = 0, fail = [];
     for (let i = 0; i < parsed.length; i++) {
       btn.textContent = `Enviando ${i+1}/${parsed.length}...`;
-      const payload = buildPayload(parsed[i].parsed, trilha, notas);
+      const payload = buildPayload(parsed[i].parsed, trilha, notas, destino);
       try {
         const res = await fetch(QUEUE_WEBHOOK, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
         if (res.ok) { ok++; trackPending(payload); }
@@ -312,7 +326,7 @@ async function addReference() {
   if (!raw) { showToast('Informe um link ou @usuário'); return; }
   const base = parseInput(raw);
   if (!base) { showToast('Link inválido — use perfil (@user) ou publicação (.../p/CODIGO/)'); return; }
-  const payload = buildPayload(base, trilha, notas);
+  const payload = buildPayload(base, trilha, notas, destino);
 
   btn.disabled = true; btn.textContent = 'Enviando...';
   try {
@@ -390,6 +404,10 @@ function adaptPromoted(r) {
     por_que_funciona: r.por_que_funciona || '',
     como_adaptar: r.como_adaptar || '',
     objetivo: r.objetivo || '',
+    transcricao: r.transcricao || '',
+    language_code: r.language_code || '',
+    audio_duration_ms: r.audio_duration_ms || 0,
+    caption: r.caption || '',
     _promoted_id: r.id,
     _is_promoted: true
   };
@@ -406,7 +424,8 @@ async function loadPromoted() {
     // (campos editoriais + transcricao + caption + thumb_url do Apify).
     // Refs novas (não-presentes nos estáticos) entram como antes.
     const ENRICH_FIELDS = ['quando_usar','por_que_funciona','como_adaptar','objetivo',
-                            'thumb_url','perfil_origem','likes','comments','views'];
+                            'thumb_url','perfil_origem','likes','comments','views',
+                            'transcricao','language_code','audio_duration_ms','caption'];
     const dataByShortcode = new Map(DATA.filter(d => d.shortcode).map(d => [d.shortcode, d]));
     const newOnes = [];
     for (const a of adapted) {
@@ -579,7 +598,13 @@ async function openModal(shortcode, trilha, etapa, tipo, formato, angulo, perfil
   </div>`;
   document.getElementById('modalBody').innerHTML = body;
   m.classList.add('open');
-  const t = TRANSCRIPTS[shortcode];
+  // Transcrição: 1º o objeto estático (75 curadas originais), 2º o campo do
+  // banco carregado via loadPromoted (itens promovidos do /live — fix do bug
+  // "Transcrição não disponível" em item promovido que TEM transcrição no DB).
+  let t = TRANSCRIPTS[shortcode];
+  if ((!t || !t.text) && full.transcricao) {
+    t = { text: full.transcricao, language_code: full.language_code || '', audio_duration: full.audio_duration_ms || 0 };
+  }
   const box = document.getElementById('transcriptBox');
   if (t && t.text) {
     box.classList.remove('transcript-empty');
