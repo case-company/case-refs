@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script src="/_auth.js"></script>
-<script src="/_feedback.js" defer></script>
 <title>Banco de Posts Fixados + Destaques</title><style>
 @import url("https://fonts.googleapis.com/css2?family=Open+Sauce+Sans:wght@300;400;500;600;700;800&display=swap");
 :root{--brand-50:#f7f6f1;--brand-100:#ece9dd;--brand-300:#c2b893;--brand-500:#8a7d52;--brand-700:#554d33;--brand-900:#35301d;--cream-50:#faf9f7;--cream-100:#f5f4f0;--cream-300:#e6e3da;--cream-500:#b8b3a3;--cream-700:#807a67;--accent-50:#fdf5f0;--accent-100:#fbe8da;--accent-300:#efa97e;--accent-500:#d4703a;--accent-700:#964627;--neutral-50:#faf9f7;--neutral-100:#f0eee7;--neutral-200:#e5e3dc;--neutral-400:#a19d90;--neutral-600:#5a564c;--neutral-800:#2e2b25;--neutral-950:#0e0d0a;--success:#4a8c5c;--warning:#c4942a;--danger:#c0392b;--info:#3a7ca5;--font-display:"Optima","Times New Roman",serif;--font-ui:"Open Sauce Sans",system-ui,sans-serif;--text-2xs:.625rem;--text-xs:.75rem;--text-sm:.8125rem;--text-base:.875rem;--text-md:1rem;--text-lg:1.125rem;--text-xl:1.35rem;--text-2xl:1.62rem;--text-3xl:1.944rem;--text-4xl:2.333rem;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-6:24px;--sp-8:32px;--sp-12:48px;--sp-16:64px;--sp-24:96px;--shadow-xs:0 1px 2px rgba(85,77,51,.06);--shadow-sm:0 1px 3px rgba(85,77,51,.1);--shadow-md:0 4px 8px rgba(85,77,51,.08);--shadow-lg:0 12px 24px rgba(85,77,51,.12);--radius-sm:4px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--radius-full:9999px}
@@ -392,6 +391,8 @@ function renderPinned(rows) {
 }
 
 function renderDestaques(rows) {
+  // guarda as rows renderizadas pro modal do destaque (clique no card)
+  window._DEST_ROWS = rows;
   const byPerfil = {};
   rows.forEach(r => { (byPerfil[r.perfil] = byPerfil[r.perfil] || []).push(r); });
   const perfis = Object.keys(byPerfil).sort();
@@ -407,19 +408,19 @@ function renderDestaques(rows) {
       const tsrc = r.thumb_local || r.thumb_db || r.cover_url;
       const thumbStyle = tsrc ? `background-image:url('${tsrc}')` : '';
       const thumbCls = tsrc ? '' : 'card-thumb-empty';
-      h += `<div class="card fade-in">
+      const idx = rows.indexOf(r);
+      const temGuia = !!(r.quando_usar || r.por_que_funciona || r.como_adaptar);
+      // card limpo — guia de uso vive no modal (clique no card), como nos fixados
+      h += `<div class="card fade-in" ${temGuia ? `onclick="openModalDest(${idx})" style="cursor:pointer"` : ''}>
         <div class="card-thumb ${thumbCls}" style="${thumbStyle}">
           ${!tsrc ? 'sem prévia' : ''}
         </div>
         <div class="card-body" style="padding:var(--sp-3)">
           <h4 class="card-title">${escapeHtml(r.titulo) || '<em style="color:var(--cream-700)">sem título</em>'}</h4>
-          <span class="badge ${TIPO_BADGE_D[r.template_estrategico]||'badge-neutral'}">${r.template_estrategico}</span>
-          ${(r.quando_usar || r.por_que_funciona || r.como_adaptar) ? `
-          <div style="margin-top:var(--sp-2);font-size:var(--text-2xs);color:var(--neutral-800);display:flex;flex-direction:column;gap:4px">
-            ${r.quando_usar ? `<div><strong style="color:var(--brand-700)">Quando usar.</strong> ${escapeHtml(r.quando_usar)}</div>` : ''}
-            ${r.por_que_funciona ? `<div><strong style="color:var(--brand-700)">Por que funciona.</strong> ${escapeHtml(r.por_que_funciona)}</div>` : ''}
-            ${r.como_adaptar ? `<div><strong style="color:var(--brand-700)">Como adaptar.</strong> ${escapeHtml(r.como_adaptar)}</div>` : ''}
-          </div>` : ''}
+          <div style="display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap">
+            <span class="badge ${TIPO_BADGE_D[r.template_estrategico]||'badge-neutral'}">${r.template_estrategico}</span>
+            ${temGuia ? '<span class="badge badge-cream" title="Clique no card pra ver o guia de uso">📖 Guia</span>' : ''}
+          </div>
         </div>
       </div>`;
     });
@@ -517,6 +518,36 @@ async function openModal(shortcode, trilha, posLabel, tipo, formato, captionShor
     box.textContent = 'Transcrição não disponível para este vídeo.';
   }
 }
+// Modal do destaque — mesmo popup dos fixados: capa + tipo + guia de uso.
+function openModalDest(idx) {
+  const r = (window._DEST_ROWS || [])[idx];
+  if (!r) return;
+  const m = document.getElementById('modal');
+  document.getElementById('modalTitle').textContent = `@${r.perfil} — ${r.titulo || 'Destaque'}`;
+  const tsrc = r.thumb_local || r.thumb_db || r.cover_url;
+  document.getElementById('modalPlayer').innerHTML = tsrc
+    ? `<img src="${tsrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md)">`
+    : `<div style="color:var(--cream-500);padding:var(--sp-6);text-align:center">sem prévia</div>`;
+  let body = `<div class="modal-meta">
+    <span class="badge badge-cream">${r.trilha}</span>
+    <span class="badge ${TIPO_BADGE_D[r.template_estrategico]||'badge-neutral'}">${escapeHtml(r.template_estrategico||'')}</span>
+    <span class="badge badge-cream">Destaque</span>
+  </div>`;
+  const qu = (r.quando_usar || '').trim();
+  const pf = (r.por_que_funciona || '').trim();
+  const ca = (r.como_adaptar || '').trim();
+  if (qu || pf || ca) {
+    body += `<div class="modal-section">
+      <h4>Guia de uso</h4>
+      ${qu ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Quando usar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(qu)}</span></div>` : ''}
+      ${pf ? `<div style="margin-bottom:var(--sp-2)"><strong style="font-size:var(--text-xs);color:var(--brand-700)">Por que funciona.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(pf)}</span></div>` : ''}
+      ${ca ? `<div><strong style="font-size:var(--text-xs);color:var(--brand-700)">Como adaptar.</strong> <span style="font-size:var(--text-sm);color:var(--neutral-800)">${escapeHtml(ca)}</span></div>` : ''}
+    </div>`;
+  }
+  document.getElementById('modalBody').innerHTML = body;
+  m.classList.add('open');
+}
+
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
   document.getElementById('modalPlayer').innerHTML = '';
