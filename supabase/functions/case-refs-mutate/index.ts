@@ -117,5 +117,71 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: true, op, data: r.data });
   }
 
+  // store_thumb — baixa a imagem (CDN do IG expira em horas/dias) e persiste
+  // no bucket público refs-thumbs; grava thumb_storage_url na linha.
+  // Server-side: sem CORS e sem service key fora daqui. Chamado pelo n8n no
+  // ingest e pelo workflow de reprocessamento/backfill.
+  //   { op: 'store_thumb', id: number, url?: string }
+  // Sem `url`, usa cover_url/display_url da própria linha.
+  if (op === "store_thumb") {
+    let srcUrl = typeof body.url === "string" && body.url.startsWith("http") ? body.url : null;
+    if (!srcUrl) {
+      const row = await fetch(
+        `${SUPABASE_URL}/rest/v1/v_referencias_publicas?select=thumb_url&id=eq.${id}`,
+        { headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}` } },
+      ).then((r) => r.json()).catch(() => null);
+      srcUrl = row?.[0]?.thumb_url || null;
+    }
+    if (!srcUrl) return jsonResponse({ ok: false, error: "no_source_url" }, 422);
+
+    let img: Response;
+    try {
+      img = await fetch(srcUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
+    } catch (e) {
+      return jsonResponse({ ok: false, error: `download_failed: ${e}` }, 502);
+    }
+    if (!img.ok) return jsonResponse({ ok: false, error: `download_http_${img.status}` }, 502);
+    const contentType = img.headers.get("content-type") || "image/jpeg";
+    if (!contentType.startsWith("image/")) {
+      return jsonResponse({ ok: false, error: `not_an_image: ${contentType}` }, 422);
+    }
+    const bytes = new Uint8Array(await img.arrayBuffer());
+    if (bytes.length === 0) return jsonResponse({ ok: false, error: "empty_image" }, 422);
+    if (bytes.length > 5 * 1024 * 1024) return jsonResponse({ ok: false, error: "image_too_large" }, 422);
+
+    const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
+    const path = `ref-${id}.${ext}`;
+    const up = await fetch(`${SUPABASE_URL}/storage/v1/object/refs-thumbs/${path}`, {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        "Content-Type": contentType,
+        "x-upsert": "true",
+      },
+      body: bytes,
+    });
+    if (!up.ok) {
+      const err = await up.text().catch(() => "");
+      return jsonResponse({ ok: false, error: `upload_failed: ${up.status} ${err.slice(0, 200)}` }, 502);
+    }
+
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/refs-thumbs/${path}`;
+    const upd = await fetch(`${SUPABASE_URL}/rest/v1/rpc/case_refs_set_thumb_storage`, {
+      method: "POST",
+      headers: {
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_id: id, p_url: publicUrl }),
+    });
+    if (!upd.ok) {
+      const err = await upd.text().catch(() => "");
+      return jsonResponse({ ok: false, error: `row_update_failed: ${err.slice(0, 200)}` }, 500);
+    }
+    return jsonResponse({ ok: true, op, thumb_storage_url: publicUrl, bytes: bytes.length });
+  }
+
   return jsonResponse({ ok: false, error: "unknown_op", op }, 400);
 });
