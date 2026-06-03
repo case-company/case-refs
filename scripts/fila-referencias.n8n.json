@@ -1,0 +1,803 @@
+{
+ "name": "[refs.casein.com.br] Fila Referencias Perfis e Publicacoes",
+ "nodes": [
+  {
+   "parameters": {
+    "content": "## 🎬 Fila Referências Perfis e Publicações\n**Orquestra scraping de perfis Instagram + publicações, com transcrição de vídeos via AssemblyAI e classificação automática.**\n- **Webhook Entrada** → **Se Perfil** (branch) vs **Se Publicação** (branch paralelo).\n- **Branch Perfil:** **Preparar Perfil** → **Apify Profile Scraper** (extrai dados) → **Normalizar Itens Perfil** → canaliza pro merge final.\n- **Branch Publicação:** **Preparar Publicacao** → **Apify Scraper Pub** → **Normalizar Item Pub** → **Se Transcrever** (condicional).\n- **Se Transcrever=Sim:** **Download Video** → **Upload AssemblyAI** → **Iniciar Transcricao** → **Wait 60s** (aguarda processamento) → **Get Transcricao** → **Se Completed** (verifica status).\n- **Merge** dos dados de perfil/pub + transcrição → **Classificar** (código/IA) → **Insert Referencia** (Postgres).\n- **Stack:** Apify (scraping perfil/publications Instagram), AssemblyAI (transcrição de áudio/vídeo), Postgres (storage referências), lógica condicional multi-branch.",
+    "height": 358,
+    "width": 760,
+    "color": 4
+   },
+   "id": "auto-resumo-Baw0VETBRz40joQ6",
+   "name": "▦ Resumo (auto)",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    48,
+    -48
+   ]
+  },
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "fila-referencias-novos",
+    "responseMode": "lastNode",
+    "options": {}
+   },
+   "id": "f858dd38-fdc9-4304-9eca-69dac56eb2d5",
+   "name": "Webhook Entrada",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1.1,
+   "position": [
+    80,
+    592
+   ],
+   "webhookId": "fila-referencias-novos"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "string": [
+      {
+       "value1": "={{ $json.body.type }}",
+       "value2": "perfil"
+      }
+     ]
+    }
+   },
+   "id": "af18d2bf-f155-4df7-b177-aacd20448794",
+   "name": "If Perfil",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    304,
+    592
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const body = $('Webhook Entrada').item.json.body;\nreturn [{ json: {\n  username: body.username,\n  trilha: body.trilha,\n  coletar_fixados: body.coletar && body.coletar.posts_fixados !== false,\n  coletar_destaques: body.coletar && body.coletar.destaques !== false,\n  transcrever: body.coletar && body.coletar.transcrever !== false,\n  notas: body.notas || '',\n  origem: body.origem || 'manual_form',\n  created_at: body.created_at\n}}];"
+   },
+   "id": "9be91ea3-6a95-40b5-b86b-25f2afe2aca2",
+   "name": "Preparar Perfil",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    528,
+    464
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBearerAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"usernames\": [\"{{ $json.username }}\"],\n  \"resultsLimit\": 30\n}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     }
+    }
+   },
+   "id": "6cf1ae45-0add-4309-906f-9fbc8d3d8cde",
+   "name": "Apify Profile Scraper",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    736,
+    384
+   ],
+   "credentials": {
+    "httpBearerAuth": {
+     "id": "rxLd0AkTeUoOqWBS",
+     "name": "Apify ALL IN"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/igview-owner~instagram-highlights-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBearerAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"usernames\": [\"{{ $('Preparar Perfil').item.json.username }}\"]\n}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     }
+    }
+   },
+   "id": "f399c1ec-fa5e-4572-aa39-28ec05b1bd5a",
+   "name": "Apify Highlights",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    960,
+    464
+   ],
+   "credentials": {
+    "httpBearerAuth": {
+     "id": "rxLd0AkTeUoOqWBS",
+     "name": "Apify ALL IN"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const meta = $('Preparar Perfil').first().json;\nconst profileData = $('Apify Profile Scraper').all().map(i => i.json).flat();\nconst highlightsData = $('Apify Highlights').all().map(i => i.json).flat();\n\nconst items = [];\n\nif (meta.coletar_fixados && profileData[0]) {\n  const profile = profileData[0];\n  const pinned = (profile.latestPosts || []).filter(p => p.isPinned);\n  pinned.sort((a,b)=>(a.timestamp||'').localeCompare(b.timestamp||''));\n  pinned.forEach((post, idx) => {\n    items.push({\n      tipo_artefato: 'post_fixado',\n      perfil: meta.username,\n      trilha: meta.trilha,\n      posicao: idx + 1,\n      url: post.url,\n      shortcode: post.shortCode,\n      formato: post.type,\n      caption: post.caption || '',\n      display_url: post.displayUrl || '',\n      video_url: post.videoUrl || '',\n      likes: post.likesCount || 0,\n      comments: post.commentsCount || 0,\n      views: post.videoPlayCount || post.videoViewCount || 0,\n      timestamp: post.timestamp,\n      transcrever: meta.transcrever && post.type === 'Video' && Boolean(post.videoUrl),\n      notas: meta.notas,\n      origem: meta.origem,\n      created_at: meta.created_at\n    });\n  });\n}\n\nif (meta.coletar_destaques) {\n  highlightsData.forEach(h => {\n    if (!h || !h.highlightId) return;\n    items.push({\n      tipo_artefato: 'destaque',\n      perfil: h.username || meta.username,\n      trilha: meta.trilha,\n      highlight_id: h.highlightId,\n      titulo: h.highlightTitle || '',\n      cover_url: h.coverImageUrl || h.coverImageUrlWrapped || '',\n      transcrever: false,\n      notas: meta.notas,\n      origem: meta.origem,\n      created_at: meta.created_at\n    });\n  });\n}\n\nreturn items.map(i => ({ json: i }));"
+   },
+   "id": "80038142-f046-40d8-a159-3fa94fc92460",
+   "name": "Normalizar Itens Perfil",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    1184,
+    464
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const body = $('Webhook Entrada').item.json.body;\nreturn [{ json: {\n  url: body.url,\n  shortcode: body.shortcode,\n  trilha: body.trilha,\n  destino: body.destino || 'trilha',\n  tipo_estrategico_manual: body.tipo_estrategico || null,\n  etapa_funil_manual: body.etapa_funil || null,\n  notas: body.notas || '',\n  origem: body.origem || 'manual_form',\n  created_at: body.created_at\n}}];"
+   },
+   "id": "bc3d3c4c-6789-4636-a277-579554eac055",
+   "name": "Preparar Publicacao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    528,
+    704
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.apify.com/v2/acts/apify~instagram-scraper/run-sync-get-dataset-items",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpBearerAuth",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"directUrls\": [\"{{ $json.url }}\"],\n  \"resultsType\": \"posts\",\n  \"resultsLimit\": 1,\n  \"addParentData\": false\n}",
+    "options": {
+     "response": {
+      "response": {
+       "neverError": true
+      }
+     }
+    }
+   },
+   "id": "bed08fa9-854a-48bb-b73d-5978d5f2672d",
+   "name": "Apify Scraper Pub",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    736,
+    704
+   ],
+   "credentials": {
+    "httpBearerAuth": {
+     "id": "rxLd0AkTeUoOqWBS",
+     "name": "Apify ALL IN"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "jsCode": "const meta = $('Preparar Publicacao').first().json;\nconst data = $input.first().json;\nconst arr = Array.isArray(data) ? data : (data && Array.isArray(data.body) ? data.body : [data]);\nconst post = arr[0];\nif (!post || !post.shortCode) {\n  // para o fluxo aqui — antes o item-erro cascateava até o INSERT com nulls\n  throw new Error('Apify nao retornou post valido: ' + meta.url);\n}\n// destino vem do form: trilha (default) | post_fixado | destaque\nconst tipo_artefato = meta.destino === 'post_fixado' ? 'post_fixado'\n                    : meta.destino === 'destaque'    ? 'destaque'\n                    : 'publicacao_avulsa';\nreturn [{ json: {\n  tipo_artefato,\n  perfil: post.ownerUsername || '',\n  trilha: meta.trilha,\n  url: post.url,\n  shortcode: post.shortCode,\n  formato: post.type,\n  caption: post.caption || '',\n  display_url: post.displayUrl || '',\n  video_url: post.videoUrl || '',\n  likes: post.likesCount || 0,\n  comments: post.commentsCount || 0,\n  views: post.videoPlayCount || post.videoViewCount || 0,\n  timestamp: post.timestamp,\n  transcrever: post.type === 'Video' && Boolean(post.videoUrl),\n  tipo_estrategico_manual: meta.tipo_estrategico_manual,\n  etapa_funil_manual: meta.etapa_funil_manual,\n  notas: meta.notas,\n  origem: meta.origem,\n  created_at: meta.created_at\n}}];"
+   },
+   "id": "ead26dfc-97aa-4ed4-b8dc-fc918309c34b",
+   "name": "Normalizar Item Pub",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    960,
+    704
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "string": [
+      {
+       "value1": "={{ String($json.transcrever) }}",
+       "value2": "true"
+      }
+     ]
+    }
+   },
+   "id": "a492c9a5-0deb-4042-8f29-31ae13c6dd0f",
+   "name": "If Transcrever",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    1408,
+    592
+   ]
+  },
+  {
+   "parameters": {
+    "url": "={{ $json.video_url }}",
+    "options": {
+     "response": {
+      "response": {
+       "responseFormat": "file"
+      }
+     }
+    }
+   },
+   "id": "6b48c30f-a31b-43ff-91ad-428581b6b143",
+   "name": "Download Video",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1616,
+    464
+   ],
+   "continueOnFail": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.assemblyai.com/v2/upload",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "ac0b21cb33a6497794eb70ebf9b33a5b"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/octet-stream"
+      }
+     ]
+    },
+    "sendBody": true,
+    "contentType": "binaryData",
+    "inputDataFieldName": "data",
+    "options": {}
+   },
+   "id": "fd29ee99-4d6c-4476-9785-2f1ef6af7772",
+   "name": "Upload AssemblyAI",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    1840,
+    464
+   ],
+   "continueOnFail": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.assemblyai.com/v2/transcript",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "ac0b21cb33a6497794eb70ebf9b33a5b"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"audio_url\": \"{{ $json.upload_url }}\",\n  \"language_detection\": true\n}",
+    "options": {}
+   },
+   "id": "609403d3-6de8-4669-adc8-0d8dbd8ec9cc",
+   "name": "Iniciar Transcricao",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2064,
+    464
+   ],
+   "continueOnFail": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "amount": 60
+   },
+   "id": "8bdd6d47-e39f-4586-823e-0886bfa68e89",
+   "name": "Wait 60s",
+   "type": "n8n-nodes-base.wait",
+   "typeVersion": 1.1,
+   "position": [
+    2288,
+    464
+   ],
+   "webhookId": "wait-poll-transcricao"
+  },
+  {
+   "parameters": {
+    "url": "=https://api.assemblyai.com/v2/transcript/{{ $('Iniciar Transcricao').item.json.id }}",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "ac0b21cb33a6497794eb70ebf9b33a5b"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "id": "bbdac1b4-f5f7-4489-8064-f84f704a1d34",
+   "name": "Get Transcricao",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    2496,
+    464
+   ],
+   "continueOnFail": true,
+   "onError": "continueRegularOutput"
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "string": [
+      {
+       "value1": "={{ $json.status }}",
+       "value2": "completed"
+      }
+     ]
+    }
+   },
+   "id": "7157e1dd-46d0-4269-9028-ec103d71e5e7",
+   "name": "If Completed",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 1,
+   "position": [
+    2720,
+    464
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const item = $('If Transcrever').first().json;\nconst trans = $json;\nreturn [{ json: { ...item, transcricao: trans.text || '', language_code: trans.language_code || '', audio_duration_ms: trans.audio_duration || 0 } }];"
+   },
+   "id": "8b8a7254-1459-4651-a961-1e3f1b4b666d",
+   "name": "Merge Transcricao",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    2944,
+    384
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "// Classificação heurística (fallback) — a IA refina depois no Merge Guia.\n// Processa TODOS os itens do input (multi-item no fluxo de perfil).\nfunction matchAny(patterns, target) { return patterns.some(p => new RegExp(p, 'i').test(target)); }\nfunction classify(i) {\n  const caption = ((i.caption || '') + ' ' + (i.transcricao || '')).toLowerCase();\n  const titulo = (i.titulo || '').toLowerCase();\n  let tipo_estrategico = i.tipo_estrategico_manual;\n  if (!tipo_estrategico) {\n    if (i.tipo_artefato === 'destaque') {\n      if (/quem sou|sobre mim|trajet|hist[oó]ria|apresent/.test(titulo)) tipo_estrategico = 'Quem Sou';\n      else if (/result|transform|antes.*depois|case|sucesso|depoiment/.test(titulo)) tipo_estrategico = 'Resultados';\n      else if (/m[eé]tod|protocolo|jornada|mentoria|clinic|tratament/.test(titulo)) tipo_estrategico = 'Metodologia/Produto';\n      else if (/faq|d[uú]vid|pergunt|valor|investiment|pre[çc]/.test(titulo)) tipo_estrategico = 'FAQ';\n      else if (/dica|educa|tutorial|passo|tip/.test(titulo)) tipo_estrategico = 'Dicas Grátis';\n      else if (/oferta|comprar|vagas|inscri|link|bio|agend|whats/.test(titulo)) tipo_estrategico = 'Mentoria/Produto/Oferta';\n      else if (/bastidor|vlog|rotina|home|pessoal|lifestyle/.test(titulo)) tipo_estrategico = 'Bastidores';\n      else tipo_estrategico = 'Específico do Nicho';\n    } else {\n      const ap = matchAny(['quem sou','me chamo','me apresent','trabalho com','atendo','especialista em','sobre mim','minha hist'], caption);\n      const pv = matchAny(['antes e depois','caso clínic','depoiment','transforma','resultado','paciente','aluno','aluna','mentorad','testemunh','evolu','jornada'], caption);\n      const of = matchAny(['agend[ae]','agendar','avalia[cç][aã]o','link na bio','clique no link','whatsapp','comente.*receb','quero o','aula gratuita','ebook'], caption);\n      if (i.posicao === 1 && ap) tipo_estrategico = 'Apresentação';\n      else if (i.posicao === 3 && of) tipo_estrategico = 'Oferta/CTA';\n      else if (of) tipo_estrategico = 'Oferta/CTA';\n      else if (pv) tipo_estrategico = 'Prova Social';\n      else if (ap) tipo_estrategico = 'Apresentação';\n      else tipo_estrategico = 'Indefinido';\n    }\n  }\n  let etapa_funil = i.etapa_funil_manual;\n  if (!etapa_funil) {\n    if (tipo_estrategico === 'Oferta/CTA' || tipo_estrategico === 'Mentoria/Produto/Oferta') etapa_funil = 'ACAO';\n    else if (['Prova Social','Resultados','Quem Sou','Bastidores'].includes(tipo_estrategico)) etapa_funil = 'CONFIANCA';\n    else etapa_funil = 'DESCOBERTA';\n  }\n  return { ...i, tipo_estrategico, etapa_funil };\n}\nreturn $input.all().map(n => ({ json: classify(n.json) }));"
+   },
+   "id": "454100cc-5a37-4e65-b086-bbe5a1b4e553",
+   "name": "Classificar",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3168,
+    592
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "INSERT INTO agente.referencias_conteudo AS r (\n  perfil, trilha, tipo_artefato, posicao,\n  url, shortcode, formato, caption,\n  display_url, video_url, cover_url, highlight_id, titulo,\n  likes, comments, views, timestamp_post,\n  transcricao, language_code, audio_duration_ms,\n  tipo_estrategico, etapa_funil,\n  quando_usar, por_que_funciona, como_adaptar, objetivo,\n  notas, origem, created_at\n) VALUES (\n  $1, $2, $3, $4, $5, $6, $7, $8,\n  $9, $10, $11, $12, $13,\n  $14, $15, $16, $17,\n  $18, $19, $20,\n  $21, $22,\n  $23, $24, $25, $26,\n  $27, $28, NOW()\n)\nON CONFLICT ((COALESCE(shortcode, perfil || '|' || highlight_id)))\n  WHERE shortcode IS NOT NULL OR highlight_id IS NOT NULL\nDO UPDATE SET\n  -- re-cadastro = reprocessamento: dados frescos do scrape sempre atualizam\n  display_url   = COALESCE(EXCLUDED.display_url, r.display_url),\n  video_url     = COALESCE(EXCLUDED.video_url, r.video_url),\n  cover_url     = COALESCE(EXCLUDED.cover_url, r.cover_url),\n  caption       = COALESCE(NULLIF(EXCLUDED.caption, ''), r.caption),\n  formato       = COALESCE(EXCLUDED.formato, r.formato),\n  titulo        = COALESCE(NULLIF(EXCLUDED.titulo, ''), r.titulo),\n  likes         = GREATEST(COALESCE(EXCLUDED.likes,0), COALESCE(r.likes,0)),\n  comments      = GREATEST(COALESCE(EXCLUDED.comments,0), COALESCE(r.comments,0)),\n  views         = GREATEST(COALESCE(EXCLUDED.views,0), COALESCE(r.views,0)),\n  timestamp_post = COALESCE(EXCLUDED.timestamp_post, r.timestamp_post),\n  -- conteúdo gerado: só preenche o que falta (curadoria humana preservada)\n  transcricao   = COALESCE(r.transcricao, EXCLUDED.transcricao),\n  language_code = COALESCE(r.language_code, EXCLUDED.language_code),\n  audio_duration_ms = CASE WHEN COALESCE(r.audio_duration_ms,0)=0 THEN EXCLUDED.audio_duration_ms ELSE r.audio_duration_ms END,\n  quando_usar      = COALESCE(r.quando_usar, EXCLUDED.quando_usar),\n  por_que_funciona = COALESCE(r.por_que_funciona, EXCLUDED.por_que_funciona),\n  como_adaptar     = COALESCE(r.como_adaptar, EXCLUDED.como_adaptar),\n  objetivo         = COALESCE(r.objetivo, EXCLUDED.objetivo),\n  tipo_estrategico = CASE WHEN r.tipo_estrategico IS NULL OR r.tipo_estrategico='Indefinido'\n                          THEN COALESCE(EXCLUDED.tipo_estrategico, r.tipo_estrategico)\n                          ELSE r.tipo_estrategico END,\n  etapa_funil   = COALESCE(r.etapa_funil, EXCLUDED.etapa_funil),\n  posicao       = COALESCE(r.posicao, EXCLUDED.posicao),\n  tipo_artefato = EXCLUDED.tipo_artefato,\n  notas         = COALESCE(NULLIF(EXCLUDED.notas, ''), r.notas),\n  deleted_at    = NULL\nRETURNING id;",
+    "options": {
+     "queryReplacement": "={{ [\n  $json.perfil,\n  $json.trilha,\n  $json.tipo_artefato,\n  $json.posicao || null,\n  $json.url || null,\n  $json.shortcode || null,\n  $json.formato || null,\n  $json.caption || null,\n  $json.display_url || null,\n  $json.video_url || null,\n  $json.cover_url || null,\n  $json.highlight_id || null,\n  $json.titulo || null,\n  $json.likes || 0,\n  $json.comments || 0,\n  $json.views || 0,\n  $json.timestamp || null,\n  $json.transcricao || null,\n  $json.language_code || null,\n  $json.audio_duration_ms || 0,\n  $json.tipo_estrategico,\n  $json.etapa_funil,\n  $json.quando_usar || null,\n  $json.por_que_funciona || null,\n  $json.como_adaptar || null,\n  $json.objetivo || null,\n  $json.notas || null,\n  $json.origem\n] }}"
+    }
+   },
+   "id": "3f68022a-55ac-42ce-87ae-b6edbda2e33e",
+   "name": "Upsert Referencia",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.5,
+   "position": [
+    4000,
+    592
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "vVXQE04tisGHZsFJ",
+     "name": "Postgres | case"
+    }
+   }
+  },
+  {
+   "name": "Montar Prompt Guia",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3376,
+    592
+   ],
+   "parameters": {
+    "jsCode": "// Monta prompts pro guia de uso (metodologia DECIDA + Primeira Impressão).\nconst CATS_TRILHA = {\n  clinic: {\n    DESCOBERTA: ['Dica com oportunidade ou novidade','Dica prática ou informacional','Pauta quente ou popularidade','Posicionamento e contrassenso'],\n    CONFIANCA: ['Bastidor e Elementos de autoridade','Dúvidas e quebras de objeção de consulta','Novo mecanismo e ou diferencial de produto','Prova comentada','Prova social dinâmica'],\n    ACAO: ['Prova']\n  },\n  scale: {\n    DESCOBERTA: ['Alerta de Erro','Dica e dúvidas','Histórias e curiosidades interessantes','Posicionamento com identificação de crença ou contrassenso','Tendências e pauta quente'],\n    CONFIANCA: ['Inspiração','Marcos de autoridade','Prova','Remoção de objeções'],\n    ACAO: ['Prova']\n  }\n};\nconst CATS_FIXADO = ['Apresentação','Prova Social','Oferta/CTA'];\nconst CATS_DESTAQUE = ['Quem Sou','Resultados','Metodologia/Produto','FAQ','Dicas Grátis','Mentoria/Produto/Oferta','Bastidores','Específico do Nicho'];\n\nconst SYS = `Você é o curador editorial do Banco de Referências da Case (mentoria de profissionais de saúde e mentores high-ticket). Sua função: analisar uma referência de conteúdo de Instagram e produzir o GUIA DE USO segundo a metodologia da Queila.\n\n## Metodologia DECIDA (objetivo editorial em 3 grupos)\n- DESCOBERTA (D+E — Descoberta + Entendimento): ser encontrada por quem ainda não conhece a expert. Critério: quem nunca viu entende em segundos por que é interessante. ~60% do calendário.\n- CONFIANCA (C+I+D — Confiança + Identificação + Desejo): aprofundar vínculo com quem já viu. Critério: a pessoa pensa \"essa é a especialista certa pra mim\". ~30%.\n- ACAO (A): chamar pra decisão — CTA direto, abertura de agenda/turma. Critério: próximo passo e janela de tempo imediatamente claros. ~10%.\n\n## Posts fixados e destaques (Camada 1 — Primeira Impressão)\nPosts fixados são a vitrine dos primeiros milissegundos: apresentação + método + prova social comentada (é obrigatório um dos três falar do método). Destaques são o menu do perfil: organizados por tema, com capas coerentes, incluindo prova social + método + bastidores. Ao analisar um fixado ou destaque, explique o papel dele NESSA vitrine — por que esse conteúdo merece o slot permanente e que percepção ele forma em quem bate o olho no perfil pela primeira vez.\n\n## Os 3 campos que você escreve\n- quando_usar: em que momento do calendário/estratégia da mentorada essa referência serve. Ex.: \"Em fases de captação de público novo, quando a mentorada precisa quebrar a crença de que só ideias inéditas vendem e atrair quem ainda hesita em começar.\"\n- por_que_funciona: o mecanismo persuasivo/narrativo REAL da peça. Ex.: \"História de bilionários reais ancora autoridade por prova social concreta, e a reflexão final converte curiosidade em identificação com quem assiste.\"\n- como_adaptar: instrução prática de transposição pro contexto da mentorada (clínica, consultório, mentoria). Ex.: \"Trocar os irmãos Samwer por um caso da própria área que cresceu adaptando modelo existente, e manter a virada final ligando execução ao nicho dela.\"\n\n## Regras de escrita\n- Português brasileiro, 1-2 frases por campo, cada campo entre 80 e 280 caracteres.\n- CONCRETO > abstrato: cite o elemento real da peça (o gancho, a história, o número, o formato), não conceito genérico. Proibido: \"conteúdo de valor\", \"gera conexão\", \"engaja a audiência\" sem dizer COMO.\n- Baseie-se no que está NA transcrição/caption. Se o material é insuficiente (sem transcrição e caption curta), seja honesto e ancore no que dá pra ver (formato, título, métricas) sem inventar conteúdo.\n\n## Output\nAPENAS um objeto JSON válido, sem markdown, sem cercas de código:\n{\"quando_usar\":\"...\",\"por_que_funciona\":\"...\",\"como_adaptar\":\"...\",\"categoria\":\"...\",\"etapa_funil\":\"DESCOBERTA|CONFIANCA|ACAO\",\"objetivo\":\"Atrair|Identificar|Desejo|Confiar|Vender\"}`;\n\nfunction userPrompt(i) {\n  let cats, papel;\n  if (i.tipo_artefato === 'post_fixado') { cats = CATS_FIXADO; papel = 'POST FIXADO (vitrine do perfil — Camada 1)'; }\n  else if (i.tipo_artefato === 'destaque') { cats = CATS_DESTAQUE; papel = 'DESTAQUE (menu do perfil — Camada 1)'; }\n  else { cats = (CATS_TRILHA[i.trilha] ? Object.values(CATS_TRILHA[i.trilha]).flat() : []); papel = 'CONTEÚDO DE TRILHA (banco editorial por etapa DECIDA)'; }\n  const parts = [\n    `Tipo de referência: ${papel}`,\n    `Trilha: ${i.trilha === 'clinic' ? 'Clínica (profissionais de saúde)' : 'Mentoria (mentores/experts)'}`,\n    `Perfil: @${i.perfil || '?'}`,\n    i.posicao ? `Posição fixado: ${i.posicao}` : '',\n    i.titulo ? `Título do destaque: ${i.titulo}` : '',\n    `Formato: ${i.formato || 'desconhecido'}`,\n    (i.likes || i.views) ? `Métricas: ${i.likes || 0} likes · ${i.comments || 0} comentários · ${i.views || 0} views` : '',\n    `Classificação heurística prévia: categoria=${i.tipo_estrategico || '?'} · etapa=${i.etapa_funil || '?'}`,\n    `Categorias válidas (escolha EXATAMENTE uma): ${cats.join(' | ')}`,\n    i.caption ? `\\n--- CAPTION ---\\n${String(i.caption).slice(0, 2000)}` : '',\n    i.transcricao ? `\\n--- TRANSCRIÇÃO ---\\n${String(i.transcricao).slice(0, 8000)}` : '\\n(sem transcrição disponível)'\n  ];\n  return parts.filter(Boolean).join('\\n');\n}\n\nreturn $input.all().map(n => ({ json: { ...n.json, _sys_prompt: SYS, _user_prompt: userPrompt(n.json) } }));"
+   }
+  },
+  {
+   "name": "Gerar Guia (IA)",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    3584,
+    592
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "https://openrouter.ai/api/v1/chat/completions",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "openRouterApi",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ model: 'anthropic/claude-opus-4.8', temperature: 0.4, max_tokens: 1000, messages: [ { role: 'system', content: $json._sys_prompt }, { role: 'user', content: $json._user_prompt } ] }) }}",
+    "options": {
+     "timeout": 120000
+    }
+   },
+   "credentials": {
+    "openRouterApi": {
+     "id": "bNKY8EDsjoL2um64",
+     "name": "OpenRouter account"
+    }
+   }
+  },
+  {
+   "name": "Merge Guia",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    3792,
+    592
+   ],
+   "parameters": {
+    "jsCode": "// Junta resposta da IA com o item original. IA falhou => campos ficam null\n// (ingest NUNCA bloqueia por causa do guia).\nconst prompts = $('Montar Prompt Guia').all();\nconst ETAPAS = ['DESCOBERTA','CONFIANCA','ACAO'];\nconst clean = s => (typeof s === 'string' && s.trim().length >= 20) ? s.trim().slice(0, 600) : null;\nreturn $input.all().map((resp, idx) => {\n  const item = { ...(prompts[idx] ? prompts[idx].json : {}) };\n  delete item._sys_prompt; delete item._user_prompt;\n  try {\n    let content = resp.json.choices?.[0]?.message?.content || '';\n    content = content.replace(/^```(json)?/m, '').replace(/```\\s*$/m, '').trim();\n    const start = content.indexOf('{'); const end = content.lastIndexOf('}');\n    if (start >= 0 && end > start) content = content.slice(start, end + 1);\n    const g = JSON.parse(content);\n    item.quando_usar = clean(g.quando_usar);\n    item.por_que_funciona = clean(g.por_que_funciona);\n    item.como_adaptar = clean(g.como_adaptar);\n    item.objetivo = (typeof g.objetivo === 'string' && g.objetivo.trim()) ? g.objetivo.trim().slice(0, 40) : null;\n    if (!item.tipo_estrategico_manual && typeof g.categoria === 'string' && g.categoria.trim()) {\n      item.tipo_estrategico = g.categoria.trim().slice(0, 80);\n    }\n    if (!item.etapa_funil_manual && ETAPAS.includes(g.etapa_funil)) {\n      item.etapa_funil = g.etapa_funil;\n    }\n  } catch (e) {\n    item._guia_error = String(e).slice(0, 200);\n  }\n  return { json: item };\n});"
+   }
+  },
+  {
+   "name": "Persistir Thumb",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    4208,
+    592
+   ],
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "method": "POST",
+    "url": "https://knusqfbvhsqworzyhvip.supabase.co/functions/v1/case-refs-mutate",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "apikey",
+       "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo"
+      },
+      {
+       "name": "Authorization",
+       "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtudXNxZmJ2aHNxd29yenlodmlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4NTg3MjcsImV4cCI6MjA3MDQzNDcyN30.f-m7TlmCoccBpUxLZhA4P5kr2lWBGtRIv6inzInAKCo"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify({ op: 'store_thumb', id: Number($json.id), url: ($('Merge Guia').item.json.cover_url || $('Merge Guia').item.json.display_url || null) }) }}",
+    "options": {
+     "timeout": 60000
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Webhook Entrada": {
+   "main": [
+    [
+     {
+      "node": "If Perfil",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "If Perfil": {
+   "main": [
+    [
+     {
+      "node": "Preparar Perfil",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Preparar Publicacao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar Perfil": {
+   "main": [
+    [
+     {
+      "node": "Apify Profile Scraper",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Apify Profile Scraper": {
+   "main": [
+    [
+     {
+      "node": "Apify Highlights",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Apify Highlights": {
+   "main": [
+    [
+     {
+      "node": "Normalizar Itens Perfil",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalizar Itens Perfil": {
+   "main": [
+    [
+     {
+      "node": "If Transcrever",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Preparar Publicacao": {
+   "main": [
+    [
+     {
+      "node": "Apify Scraper Pub",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Apify Scraper Pub": {
+   "main": [
+    [
+     {
+      "node": "Normalizar Item Pub",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Normalizar Item Pub": {
+   "main": [
+    [
+     {
+      "node": "If Transcrever",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "If Transcrever": {
+   "main": [
+    [
+     {
+      "node": "Download Video",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Classificar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Download Video": {
+   "main": [
+    [
+     {
+      "node": "Upload AssemblyAI",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Upload AssemblyAI": {
+   "main": [
+    [
+     {
+      "node": "Iniciar Transcricao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Iniciar Transcricao": {
+   "main": [
+    [
+     {
+      "node": "Wait 60s",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Get Transcricao": {
+   "main": [
+    [
+     {
+      "node": "If Completed",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "If Completed": {
+   "main": [
+    [
+     {
+      "node": "Merge Transcricao",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Classificar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Merge Transcricao": {
+   "main": [
+    [
+     {
+      "node": "Classificar",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Classificar": {
+   "main": [
+    [
+     {
+      "node": "Montar Prompt Guia",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Wait 60s": {
+   "main": [
+    [
+     {
+      "node": "Get Transcricao",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar Prompt Guia": {
+   "main": [
+    [
+     {
+      "node": "Gerar Guia (IA)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Gerar Guia (IA)": {
+   "main": [
+    [
+     {
+      "node": "Merge Guia",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Merge Guia": {
+   "main": [
+    [
+     {
+      "node": "Upsert Referencia",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Upsert Referencia": {
+   "main": [
+    [
+     {
+      "node": "Persistir Thumb",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "all"
+ }
+}

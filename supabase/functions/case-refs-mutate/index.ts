@@ -53,8 +53,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "invalid_json" }, 400);
   }
 
-  const { op, id } = body;
-  if (!op || typeof id !== "number") {
+  const op = body.op;
+  // id pode chegar como string (bigint do Postgres vira string no n8n)
+  const id = Number(body.id);
+  if (!op || !Number.isFinite(id)) {
     return jsonResponse({ ok: false, error: "missing_op_or_id" }, 400);
   }
 
